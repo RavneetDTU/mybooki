@@ -5,4 +5,12 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+
+  preview: {
+    host: true,
+    port: 5014, // or 5014 depending on app
+    allowedHosts: [
+      'mybooki.jarviscalling.ai'
+    ]
+  }
 })
