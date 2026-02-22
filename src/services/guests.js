@@ -4,29 +4,37 @@ import { handleApiError } from '../utils/errorHandler';
 
 /**
  * Guest Service
- * Handles all guest-related API calls
+ * Handles all guest-related API calls.
+ * Every method requires `restaurantId` to scope requests to the correct restaurant.
  */
 
 export const guestService = {
     /**
-     * Fetch all guests
+     * Fetch all guests for a restaurant.
+     * @param {string} restaurantId - Restaurant ID from auth store
      * @returns {Promise<Array>} - Array of guest objects
+     *
+     * API response shape (flat fields):
+     * { id, restaurant_id, name, phone, email, last_visit,
+     *   total_bookings, total_showups, total_no_shows, total_cancellations }
      */
-    getGuests: async () => {
+    getGuests: async (restaurantId) => {
         try {
-            const response = await apiClient.get(GUEST_ENDPOINTS.GET_ALL);
+            const response = await apiClient.get(GUEST_ENDPOINTS.GET_ALL(restaurantId));
             const data = response.data;
 
-            // Transform API response to frontend format
-            const guests = data.map(guest => ({
+            // Map flat API fields to frontend-friendly names
+            const guests = data.map((guest) => ({
                 id: guest.id,
+                restaurantId: guest.restaurant_id,
                 name: guest.name,
                 phone: guest.phone,
                 email: guest.email || '',
-                totalBookings: guest.bookings?.total || 0,
-                cancellations: guest.bookings?.cancellations || 0,
-                noShows: guest.bookings?.no_shows || 0,
                 lastVisit: guest.last_visit,
+                totalBookings: guest.total_bookings ?? 0,
+                totalShowups: guest.total_showups ?? 0,
+                noShows: guest.total_no_shows ?? 0,
+                cancellations: guest.total_cancellations ?? 0,
             }));
 
             return guests;
@@ -37,22 +45,22 @@ export const guestService = {
     },
 
     /**
-     * Update a guest's details
-     * @param {Object} guest - Guest object with updated data
-     * @returns {Promise<Object>} - Updated guest data
+     * Update a guest's details.
+     * @param {Object} guest        - Guest object with updated data (must include id)
+     * @param {string} restaurantId - Restaurant ID from auth store
      */
-    updateGuest: async (guest) => {
+    updateGuest: async (guest, restaurantId) => {
         try {
-            const endpoint = GUEST_ENDPOINTS.UPDATE.replace(':id', guest.id);
-
-            // Transform frontend format to API format
             const payload = {
                 name: guest.name,
                 phone: guest.phone,
                 email: guest.email || null,
             };
 
-            const response = await apiClient.patch(endpoint, payload);
+            const response = await apiClient.patch(
+                GUEST_ENDPOINTS.UPDATE(restaurantId, guest.id),
+                payload
+            );
             return response.data;
         } catch (error) {
             const message = handleApiError(error, 'Failed to update guest');

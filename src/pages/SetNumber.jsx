@@ -1,10 +1,14 @@
-import { Phone, Save } from 'lucide-react';
+import { Phone, Save, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { settingsService } from '../services/settings';
+import { phoneVerificationService } from '../services/phoneVerification';
 
 export function SetNumber() {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [loading, setLoading] = useState(true);
+    const [verificationStatus, setVerificationStatus] = useState('idle'); // 'idle' | 'verifying' | 'valid' | 'invalid' | 'error'
+    const [verificationResult, setVerificationResult] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         loadPhoneNumber();
@@ -22,12 +26,44 @@ export function SetNumber() {
     };
 
     const handleSaveNumber = async () => {
+        if (!phoneNumber.trim()) {
+            setVerificationStatus('error');
+            setVerificationResult({ error: 'Please enter a phone number' });
+            return;
+        }
+
         try {
-            await settingsService.updatePhoneNumber(phoneNumber);
-            alert('Phone number updated successfully!');
+            setIsSubmitting(true);
+            setVerificationStatus('verifying');
+            setVerificationResult(null);
+
+            // Step 1: Verify the phone number with Twilio Lookup
+            const verification = await phoneVerificationService.verifyPhoneNumber(phoneNumber);
+
+            if (!verification.success || !verification.valid) {
+                setVerificationStatus('invalid');
+                setVerificationResult({
+                    error: verification.error || 'This phone number is invalid or inactive'
+                });
+                setIsSubmitting(false);
+                return;
+            }
+
+            // Step 2: If valid, save to backend (commented out as API is not available)
+            setVerificationStatus('valid');
+            setVerificationResult(verification);
+
+            // await settingsService.updatePhoneNumber(phoneNumber); // API endpoint not available yet
+            alert('Phone number verified successfully! (Update API not available)');
+
         } catch (error) {
-            alert('Failed to update phone number');
-            console.error(error);
+            setVerificationStatus('error');
+            setVerificationResult({
+                error: 'An unexpected error occurred. Please try again.'
+            });
+            console.error('Verification error:', error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -74,14 +110,62 @@ export function SetNumber() {
                                 <input
                                     type="tel"
                                     value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                    onChange={(e) => {
+                                        setPhoneNumber(e.target.value);
+                                        setVerificationStatus('idle');
+                                        setVerificationResult(null);
+                                    }}
+                                    className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 transition-all ${verificationStatus === 'valid'
+                                        ? 'border-green-500 focus:ring-green-500 bg-green-50'
+                                        : verificationStatus === 'invalid' || verificationStatus === 'error'
+                                            ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                                            : 'border-border focus:ring-foreground focus:border-foreground'
+                                        }`}
                                     placeholder="+1 (555) 123-4567"
+                                    disabled={isSubmitting}
                                 />
                             )}
                             <p className="text-xs text-muted-foreground mt-1.5">
                                 This number will be used for AI-powered reservation calls and call forwarding. Ensure it can receive incoming calls.
                             </p>
+
+                            {/* Verification Status */}
+                            {verificationStatus === 'verifying' && (
+                                <div className="mt-3 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Verifying phone number...</span>
+                                </div>
+                            )}
+
+                            {verificationStatus === 'valid' && verificationResult && (
+                                <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <div className="flex items-center gap-2 text-sm text-green-800 mb-1">
+                                        <CheckCircle className="w-4 h-4" />
+                                        <span className="font-medium">Valid phone number verified!</span>
+                                    </div>
+                                    <div className="text-xs text-green-700 ml-6">
+                                        {verificationResult.nationalFormat && (
+                                            <p>Format: {verificationResult.nationalFormat}</p>
+                                        )}
+                                        {verificationResult.lineTypeIntelligence?.type && (
+                                            <p>Type: {verificationResult.lineTypeIntelligence.type}</p>
+                                        )}
+                                        {verificationResult.lineTypeIntelligence?.carrierName && (
+                                            <p>Carrier: {verificationResult.lineTypeIntelligence.carrierName}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {(verificationStatus === 'invalid' || verificationStatus === 'error') && verificationResult && (
+                                <div className="mt-3 flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-medium">Verification failed</p>
+                                        <p className="text-xs text-red-600 mt-1">{verificationResult.error}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Info Box */}
@@ -99,11 +183,23 @@ export function SetNumber() {
                         <div className="flex justify-end mt-4 pt-4 border-t border-border">
                             <button
                                 onClick={handleSaveNumber}
-                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer"
-                                disabled={loading}
+                                className={`px-4 py-2 rounded-md transition-colors text-sm font-medium flex items-center gap-2 ${isSubmitting || loading
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-foreground hover:bg-foreground/90 cursor-pointer'
+                                    } text-white`}
+                                disabled={loading || isSubmitting}
                             >
-                                <Save className="w-4 h-4" />
-                                Save Number
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Verifying...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-4 h-4" />
+                                        Save Number
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

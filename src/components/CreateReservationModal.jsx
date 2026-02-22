@@ -8,6 +8,7 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
         date: '',
         time: '',
         party_size: '',
+        allergies: '',
         notes: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,14 +24,16 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
 
         setIsSubmitting(true);
         try {
-            // Prepare data for API
+            // Prepare data for API — matches POST /restaurants/:id/reservations body
             const reservationData = {
                 name: formData.name,
                 phone: formData.phone,
                 date: formData.date,
                 time: formData.time,
                 party_size: parseInt(formData.party_size),
-                notes: formData.notes || null,
+                allergies: formData.allergies || 'NA',
+                notes: formData.notes || 'NA',
+                transcription: 'manually created',
             };
 
             await onSuccess(reservationData);
@@ -42,6 +45,7 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
                 date: '',
                 time: '',
                 party_size: '',
+                allergies: '',
                 notes: '',
             });
             onClose();
@@ -166,19 +170,33 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
                         />
                     </div>
 
+                    {/* Allergies (Optional) */}
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                            <FileText className="w-4 h-4" />
+                            Allergies
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.allergies}
+                            onChange={(e) => handleChange('allergies', e.target.value)}
+                            className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                            placeholder="e.g. peanuts, gluten — leave blank for NA"
+                        />
+                    </div>
+
                     {/* Notes (Optional) */}
                     <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
                             <FileText className="w-4 h-4" />
-                            Notes *
+                            Notes
                         </label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => handleChange('notes', e.target.value)}
                             className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all resize-none"
-                            placeholder="Allergies (Please fill NA, in case of nothing)."
+                            placeholder="Any special requests or additional info — leave blank for NA"
                             rows="3"
-                            required
                         />
                     </div>
 
@@ -196,7 +214,7 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
                             type="submit"
                             className="flex-1 px-4 py-2 bg-foreground cursor-pointer text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={isSubmitting}
-                        > 
+                        >
                             {isSubmitting ? 'Creating...' : 'Create Reservation'}
                         </button>
                     </div>

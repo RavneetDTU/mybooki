@@ -1,58 +1,53 @@
 import apiClient from './api/axios';
-import { SETTINGS_ENDPOINTS } from './api/endpoints';
+import { ADDRESS_ENDPOINTS, AUTH_ENDPOINTS } from './api/endpoints';
 import { handleApiError } from '../utils/errorHandler';
 
 /**
  * Settings Service
- * Handles all restaurant settings-related API calls
+ * Handles address (GET/PUT) and password change.
+ * All address calls are scoped to the logged-in restaurantId.
  */
 
 export const settingsService = {
     /**
-     * Get restaurant settings (name, email, phone, etc.)
-     * @returns {Promise<Object>} - Restaurant settings data
+     * Get restaurant address.
+     * GET /restaurants/:restaurantId/address
      */
-    getRestaurantSettings: async () => {
+    getAddress: async (restaurantId) => {
         try {
-            const response = await apiClient.get(SETTINGS_ENDPOINTS.GET_RESTAURANT);
+            console.log('[Settings] Fetching address for restaurantId:', restaurantId);
+            const response = await apiClient.get(ADDRESS_ENDPOINTS.GET(restaurantId));
             const data = response.data;
+            console.log('[Settings] Address response:', data);
 
             return {
-                name: data.name,
-                email: data.email,
-                phone: data.phone,
-                totalCapacity: data.total_capacity,
-                timezone: data.timezone,
-                // Address will be added when available from API
-                address: {
-                    streetLine1: '',
-                    city: '',
-                    province: '',
-                    postalCode: '',
-                },
+                streetLine1: data.street_address || '',
+                city: data.city || '',
+                province: data.province_state || '',
+                postalCode: data.postal_code || '',
             };
         } catch (error) {
-            const message = handleApiError(error, 'Failed to fetch restaurant settings');
+            const message = handleApiError(error, 'Failed to fetch address');
             throw new Error(message);
         }
     },
 
     /**
-     * Get Restaurant Settings (legacy method for backward compatibility)
-     * @deprecated Use getRestaurantSettings instead
+     * Update restaurant address.
+     * PUT /restaurants/:restaurantId/address
+     * Body: { street_address, city, province_state, postal_code }
      */
-    getSettings: async () => {
-        return settingsService.getRestaurantSettings();
-    },
-
-    /**
-     * Update restaurant address
-     * @param {Object} addressData - Address data
-     * @returns {Promise<Object>} - Update response
-     */
-    updateAddress: async (addressData) => {
+    updateAddress: async (restaurantId, addressData) => {
         try {
-            const response = await apiClient.put(SETTINGS_ENDPOINTS.UPDATE_ADDRESS, addressData);
+            const payload = {
+                street_address: addressData.streetLine1,
+                city: addressData.city,
+                province_state: addressData.province,
+                postal_code: addressData.postalCode,
+            };
+            console.log('[Settings] Updating address:', payload);
+            const response = await apiClient.put(ADDRESS_ENDPOINTS.UPDATE(restaurantId), payload);
+            console.log('[Settings] Address update response:', response.data);
             return response.data;
         } catch (error) {
             const message = handleApiError(error, 'Failed to update address');
@@ -61,26 +56,7 @@ export const settingsService = {
     },
 
     /**
-     * Update restaurant email
-     * @param {string} email - New email address
-     * @returns {Promise<Object>} - Update response
-     */
-    updateEmail: async (email) => {
-        try {
-            // Use PATCH on restaurant endpoint
-            const response = await apiClient.patch(SETTINGS_ENDPOINTS.UPDATE_RESTAURANT, { email });
-            return response.data;
-        } catch (error) {
-            const message = handleApiError(error, 'Failed to update email');
-            throw new Error(message);
-        }
-    },
-
-    /**
-     * Change password
-     * @param {string} currentPassword - Current password
-     * @param {string} newPassword - New password
-     * @returns {Promise<Object>} - Update response
+     * Change password.
      */
     changePassword: async (currentPassword, newPassword) => {
         try {
@@ -88,39 +64,10 @@ export const settingsService = {
                 current_password: currentPassword,
                 new_password: newPassword,
             };
-            const response = await apiClient.patch(SETTINGS_ENDPOINTS.UPDATE_PASSWORD, payload);
+            const response = await apiClient.patch(AUTH_ENDPOINTS.UPDATE_PASSWORD, payload);
             return response.data;
         } catch (error) {
             const message = handleApiError(error, 'Failed to change password');
-            throw new Error(message);
-        }
-    },
-
-    /**
-     * Get phone number
-     * @returns {Promise<Object>} - Phone number data
-     */
-    getPhoneNumber: async () => {
-        try {
-            const settings = await settingsService.getRestaurantSettings();
-            return { phoneNumber: settings.phone };
-        } catch (error) {
-            const message = handleApiError(error, 'Failed to fetch phone number');
-            throw new Error(message);
-        }
-    },
-
-    /**
-     * Update restaurant phone number
-     * @param {string} phoneNumber - New phone number
-     * @returns {Promise<Object>} - Update response
-     */
-    updatePhoneNumber: async (phoneNumber) => {
-        try {
-            const response = await apiClient.put(SETTINGS_ENDPOINTS.UPDATE_PHONE, { phone: phoneNumber });
-            return response.data;
-        } catch (error) {
-            const message = handleApiError(error, 'Failed to update phone number');
             throw new Error(message);
         }
     },

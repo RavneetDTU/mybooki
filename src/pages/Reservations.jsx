@@ -1,40 +1,56 @@
 import { ChevronLeft, ChevronRight, Phone, Users, Calendar, X, Clock, Plus } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { reservationService } from '../services/reservations';
+import { useAuthStore } from '../store/useAuthStore';
 import ConversationModal from '../components/ConversationModal';
 import CreateReservationModal from '../components/CreateReservationModal';
 
 export function Reservations() {
+    const { restaurantId } = useAuthStore();
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [selectedReservationId, setSelectedReservationId] = useState(null);
+    const [selectedReservation, setSelectedReservation] = useState(null);
     const [showConversationModal, setShowConversationModal] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [reservations, setReservations] = useState([]);
-    const [reservationData, setReservationData] = useState(null); // Store full API response
+    const [reservationData, setReservationData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
 
-    // Fetch reservations when date changes
-    const fetchReservations = async () => {
-        setIsLoading(true);
+    // Fetch reservations — silent=true skips the full loading spinner (used for background polls)
+    const fetchReservations = useCallback(async (silent = false) => {
+        if (!restaurantId) return;
+        if (!silent) setIsLoading(true);
         try {
-            const data = await reservationService.getReservations(selectedDate);
-            // Store full response data
+            console.log('[Reservations] Fetching for restaurantId:', restaurantId, '| date:', selectedDate);
+            const data = await reservationService.getReservations(selectedDate, restaurantId);
+            console.log('[Reservations] Response:', data);
             setReservationData(data);
-            // Extract reservations array
             setReservations(data.reservations || []);
         } catch (error) {
-            console.error("Failed to fetch reservations", error);
-            setReservations([]);
-            setReservationData(null);
+            console.error('[Reservations] Fetch failed:', error);
+            if (!silent) {
+                setReservations([]);
+                setReservationData(null);
+            }
         } finally {
-            setIsLoading(false);
+            if (!silent) setIsLoading(false);
         }
-    };
+    }, [selectedDate, restaurantId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Initial fetch + re-fetch when date or restaurantId changes
     useEffect(() => {
         fetchReservations();
-    }, [selectedDate]);
+    }, [fetchReservations]);
+
+    // Poll every 30 seconds (silent background refresh)
+    useEffect(() => {
+        const POLL_INTERVAL_MS = 30_000;
+        const timer = setInterval(() => {
+            console.log('[Reservations] 30s poll — refreshing...');
+            fetchReservations(true);
+        }, POLL_INTERVAL_MS);
+        return () => clearInterval(timer);
+    }, [fetchReservations]);
 
 
     // Use API-provided counts if available, otherwise calculate
@@ -74,13 +90,13 @@ export function Reservations() {
     };
 
     const handleViewConversation = (reservation) => {
-        setSelectedReservationId(reservation.id);
+        setSelectedReservation(reservation);
         setShowConversationModal(true);
     };
 
     const handleCloseModal = () => {
         setShowConversationModal(false);
-        setSelectedReservationId(null);
+        setSelectedReservation(null);
     };
 
     // Convert Date to yyyy-mm-dd format for input
@@ -99,9 +115,8 @@ export function Reservations() {
     // Handle manual reservation creation
     const handleCreateReservation = async (reservationData) => {
         try {
-            await reservationService.createManualReservation(reservationData);
+            await reservationService.createManualReservation(reservationData, restaurantId);
             alert('Reservation created successfully!');
-            // Refresh reservations list
             fetchReservations();
         } catch (error) {
             alert(error.message || 'Failed to create reservation');
@@ -377,7 +392,7 @@ export function Reservations() {
             <ConversationModal
                 isOpen={showConversationModal}
                 onClose={handleCloseModal}
-                reservationId={selectedReservationId}
+                reservation={selectedReservation}
             />
 
             {/* Create Reservation Modal */}

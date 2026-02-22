@@ -1,29 +1,46 @@
 import { useEffect, useState } from 'react';
-import { X, Clock } from 'lucide-react';
-import { reservationService } from '../services/reservations';
+import { X, MessageSquare } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
+import apiClient from '../services/api/axios';
+import { TRANSCRIPTION_ENDPOINTS } from '../services/api/endpoints';
+import { handleApiError } from '../utils/errorHandler';
 
-export default function ConversationModal({ isOpen, onClose, reservationId }) {
-    const [details, setDetails] = useState(null);
+/**
+ * ConversationModal
+ * Fetches transcription via /restaurants/:restaurantId/transcriptions/:bookingId
+ * The bookingId comes from reservation.id (e.g. "BK-A0E78660").
+ */
+export default function ConversationModal({ isOpen, onClose, reservation }) {
+    const { restaurantId } = useAuthStore();
+    const [transcription, setTranscription] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        if (isOpen && reservationId) {
-            loadDetails(reservationId);
-        } else {
-            setDetails(null);
-        }
-    }, [isOpen, reservationId]);
+    // reservation.bookingId holds the booking ID like "BK-A0E78660" (from booking_id in API)
+    const bookingId = reservation?.bookingId;
 
-    const loadDetails = async (id) => {
+    useEffect(() => {
+        if (isOpen && bookingId && restaurantId) {
+            loadTranscription(bookingId);
+        } else {
+            setTranscription(null);
+            setError(null);
+        }
+    }, [isOpen, bookingId, restaurantId]);
+
+    const loadTranscription = async (id) => {
         setLoading(true);
         setError(null);
         try {
-            const data = await reservationService.getReservationDetails(id);
-            setDetails(data);
+            const url = TRANSCRIPTION_ENDPOINTS.GET_BY_BOOKING_ID(restaurantId, id);
+            console.log('[ConversationModal] Fetching transcription:', url);
+            const response = await apiClient.get(url);
+            console.log('[ConversationModal] Transcription response:', response.data);
+            setTranscription(response.data);
         } catch (err) {
-            console.error("Failed to load details", err);
-            setError("Failed to load conversation details.");
+            const message = handleApiError(err, 'Failed to load transcription');
+            console.error('[ConversationModal] Error:', err);
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -31,18 +48,22 @@ export default function ConversationModal({ isOpen, onClose, reservationId }) {
 
     if (!isOpen) return null;
 
+    const display = (val) => (val !== null && val !== undefined && val !== '' ? val : 'N/A');
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg border border-border max-w-3xl w-full max-h-[90vh] flex flex-col">
-                {/* Modal Header */}
-                <div className="border-b border-border p-[20px] px-[20px] py-[10px]">
+
+                {/* ── Header ── */}
+                <div className="border-b border-border px-5 py-4">
                     <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                             <h3 className="font-heading font-semibold text-foreground text-lg">
-                                Restaurant table booking
+                                Reservation Details
                             </h3>
                             <p className="text-xs text-muted-foreground mt-1">
-                                ID: {details?.conversationId || 'Loading...'} | Payment ID: {details?.paymentId || 'N/A'}
+                                Booking ID: {display(bookingId)} &nbsp;|&nbsp;
+                                Guest: {display(reservation?.bookerName)}
                             </p>
                         </div>
                         <button
@@ -53,105 +74,81 @@ export default function ConversationModal({ isOpen, onClose, reservationId }) {
                         </button>
                     </div>
 
-                    {/* Badges and Date/Duration */}
-                    {details && (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-                                    done
+                    {/* Meta badges */}
+                    {reservation && (
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`px-2.5 py-1 text-xs font-medium rounded capitalize
+                                    ${reservation.status === 'confirmed' ? 'bg-green-100 text-green-700'
+                                        : reservation.status === 'cancelled' ? 'bg-red-100 text-red-700'
+                                            : reservation.status === 'no_show' ? 'bg-orange-100 text-orange-700'
+                                                : 'bg-gray-100 text-gray-600'}`}
+                                >
+                                    {display(reservation.status)}
                                 </span>
-                                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                                    SMS Sent
+                                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded capitalize">
+                                    {display(reservation.source)}
                                 </span>
-                                <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-                                    success
-                                </span>
+                                {reservation.tableNumber ? (
+                                    <span className="px-2.5 py-1 bg-foreground text-white text-xs font-medium rounded">
+                                        Table {reservation.tableNumber}
+                                    </span>
+                                ) : (
+                                    <span className="px-2.5 py-1 border border-border text-muted-foreground text-xs font-medium rounded">
+                                        No Table
+                                    </span>
+                                )}
                             </div>
-                            <div className="text-right">
-                                <p className="text-xs text-foreground font-medium">
-                                    {details.callDate || 'N/A'}
+                            <div className="text-right text-xs text-muted-foreground">
+                                <p className="font-medium text-foreground">
+                                    {display(reservation.date)} &nbsp; {display(reservation.time)}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
-                                    Duration: {details.callDuration || 'N/A'}
-                                </p>
+                                <p>Party of {display(reservation.guests)}</p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Content Area */}
+                {/* ── Body ── */}
                 <div className="flex-1 overflow-y-auto">
                     {loading ? (
                         <div className="flex items-center justify-center h-64">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
                         </div>
                     ) : error ? (
-                        <div className="text-center py-12 text-red-500">
-                            {error}
+                        <div className="text-center py-12 text-red-500 px-6">
+                            <p className="text-sm">{error}</p>
                         </div>
-                    ) : details ? (
-                        <>
-                            {/* Summary Section */}
-                            {details.summary && (
-                                <div className="border-b border-border p-5 px-[20px] py-[10px]">
-                                    <h4 className="text-sm font-semibold text-blue-600 mb-2">Summary</h4>
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <p className="text-sm text-blue-900 leading-relaxed">
-                                            {details.summary}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                    ) : (
+                        <div className="p-5 space-y-4">
+                            {/* Transcription */}
+                            <div className="flex items-center gap-2 mb-3">
+                                <MessageSquare className="w-4 h-4 text-foreground" />
+                                <h4 className="text-sm font-semibold text-foreground">Call Transcription</h4>
+                            </div>
 
-                            {/* Transcript Section */}
-                            <div className="p-5">
-                                {details.transcript && details.transcript.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-foreground mb-3">Transcript</h4>
-                                        <div className="space-y-4">
-                                            {details.transcript.map((message, index) => (
-                                                <div
-                                                    key={index}
-                                                    className={`flex ${message.speaker === 'customer' ? 'justify-end' : 'justify-start'
-                                                        }`}
-                                                >
-                                                    <div
-                                                        className={`max-w-[75%] ${message.speaker === 'customer'
-                                                                ? 'bg-[#2B7FFF] text-white'
-                                                                : 'bg-gray-100 text-gray-900'
-                                                            } rounded-lg p-3`}
-                                                    >
-                                                        <div className="flex items-center justify-between gap-3 mb-1">
-                                                            <span className="text-xs font-semibold opacity-70">
-                                                                {message.speaker === 'customer' ? 'Customer' : 'Agent'}
-                                                            </span>
-                                                            <span className="text-xs opacity-60">
-                                                                {message.timestamp}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-sm leading-relaxed">
-                                                            {message.text}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {(!details.summary && (!details.transcript || details.transcript.length === 0)) && (
-                                    <div className="text-center py-12">
-                                        <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-40" />
-                                        <p className="text-muted-foreground">
-                                            No conversation data available for this reservation
-                                        </p>
-                                    </div>
+                            <div className="bg-gray-50 border border-border rounded-lg p-4">
+                                {transcription?.transcription ? (
+                                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                                        {transcription.transcription}
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">N/A</p>
                                 )}
                             </div>
-                        </>
-                    ) : null}
+
+                            {/* Notes card */}
+                            {reservation?.notes && (
+                                <div className="bg-white border border-border rounded-lg p-4">
+                                    <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                                    <p className="text-sm font-medium text-foreground">{reservation.notes}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                {/* Modal Footer */}
+                {/* ── Footer ── */}
                 <div className="border-t border-border p-4">
                     <button
                         onClick={onClose}
