@@ -1,25 +1,29 @@
 import { Edit2, Save, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { guestService } from '../services/guests';
+import { useAuthStore } from '../store/useAuthStore';
 
 export function Guests() {
+    const { restaurantId } = useAuthStore();
     const [guests, setGuests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
     const [editedGuest, setEditedGuest] = useState(null);
 
-    // Fetch guests on mount
+    // Fetch guests on mount (and when restaurantId changes)
     useEffect(() => {
         loadGuests();
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [restaurantId]);
 
     const loadGuests = async () => {
+        if (!restaurantId) return;
         setLoading(true);
         try {
-            const data = await guestService.getGuests();
+            const data = await guestService.getGuests(restaurantId);
             setGuests(data);
         } catch (error) {
-            console.error("Failed to load guests", error);
+            console.error('Failed to load guests', error);
         } finally {
             setLoading(false);
         }
@@ -33,18 +37,13 @@ export function Guests() {
     const handleSave = async () => {
         if (editedGuest) {
             try {
-                // Call API to update guest
-                await guestService.updateGuest(editedGuest);
-
-                // Update local state to reflect changes
+                await guestService.updateGuest(editedGuest, restaurantId);
                 setGuests(guests.map((g) => (g.id === editedGuest.id ? editedGuest : g)));
-
-                // Reset edit mode
                 setEditingId(null);
                 setEditedGuest(null);
-                alert("Guest details updated successfully");
+                alert('Guest details updated successfully');
             } catch (error) {
-                alert("Failed to update guest details");
+                alert('Failed to update guest details');
                 console.error(error);
             }
         }
