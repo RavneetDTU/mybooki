@@ -134,7 +134,7 @@ export const reservationService = {
     createManualReservation: async (reservationData, restaurantId) => {
         try {
             const response = await apiClient.post(
-                RESERVATION_ENDPOINTS.CREATE_MANUAL(restaurantId),
+                RESERVATION_ENDPOINTS.CREATE(restaurantId),
                 reservationData
             );
             return response.data;
