@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 // Auth Pages
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import RegistrationPending from './pages/RegistrationPending';
 
 // DinePlan Pages
 import { Reservations } from './pages/Reservations';
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/registration-pending" element={<RegistrationPending />} />
 
         {/* --- Main App Layout (Sidebar + Content) --- */}
         {/* This catches all other paths (*) and renders the Sidebar layout */}
