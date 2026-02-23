@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { useAuthStore } from '../store/useAuthStore';
+import { authService } from '../services/auth';
 
 /* ─── SVG icon components (black / slate, aesthetic minimal) ─── */
 const IconCalendar = () => (
@@ -73,9 +73,9 @@ const FEATURES = [
 /* ─── Main Component ─── */
 export default function Signup() {
     const navigate = useNavigate();
-    const { signup, isLoading, error: storeError } = useAuthStore();
     const [localError, setLocalError] = useState(null);
-    const error = localError || storeError;
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const error = localError;
 
     const [step, setStep] = useState(1);
     const fileInputRef = useRef(null);
@@ -118,12 +118,16 @@ export default function Signup() {
         e.preventDefault();
         if (!validateStep()) return;
         setLocalError(null);
+        setIsSubmitting(true);
         try {
-            // TODO: replace with full registration API call when ready
-            await signup({ name: formData.name, email: formData.email, password: formData.password });
+            const result = await authService.register(formData, formData.verificationDoc);
+            console.log('[Signup] Registration successful:', result);
             navigate('/registration-pending');
         } catch (err) {
-            console.error('Signup Failed:', err);
+            console.error('[Signup] Registration failed:', err);
+            setLocalError(err.message || 'Registration failed. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -284,7 +288,7 @@ export default function Signup() {
                                     ) : (
                                         <>
                                             <p className="text-sm font-medium text-foreground">Click to upload document</p>
-                                            <p className="text-xs text-muted-foreground">PDF, JPG, PNG — max 10 MB</p>
+                                            <p className="text-xs text-muted-foreground">PDF, JPG, — max 10 MB</p>
                                         </>
                                     )}
                                 </div>
@@ -351,10 +355,10 @@ export default function Signup() {
                                 ← Back
                             </button>
                         )}
-                        <button type="submit" disabled={isLoading}
+                        <button type="submit" disabled={isSubmitting}
                             className="flex-1 px-6 py-3 cursor-pointer rounded-lg font-medium text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-60"
                             style={{ background: '#0f172a', color: '#fff' }}>
-                            {isLoading
+                            {isSubmitting
                                 ? 'Submitting…'
                                 : step === 3
                                     ? 'Submit Registration Request →'

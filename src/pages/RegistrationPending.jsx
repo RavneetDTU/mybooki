@@ -117,7 +117,7 @@ export default function RegistrationPending() {
                     </div>
 
                     {/* CTA Buttons */}
-                    <div className="space-y-3">
+                    {/* <div className="space-y-3">
                         <Link to="/login"
                             className="block w-full text-center py-3 rounded-xl font-medium text-sm transition-all duration-200 hover:opacity-90"
                             style={{ background: '#0f172a', color: '#fff' }}>
@@ -127,7 +127,7 @@ export default function RegistrationPending() {
                             className="block w-full text-center py-3 rounded-xl font-medium text-sm border border-border text-foreground hover:bg-slate-50 transition-colors">
                             Contact Support
                         </a>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Footer */}
