@@ -1,11 +1,16 @@
 import { ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
 import { useState } from 'react';
+import apiClient from '../services/api/axios';
+import { AVAILABILITY_ENDPOINTS } from '../services/api/endpoints';
+import { useAuthStore } from '../store/useAuthStore';
 
 export function Availability() {
+  const { restaurantId } = useAuthStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  
+  const [isSaving, setIsSaving] = useState(false);
+
   // Edit modal state
   const [editIsOpen, setEditIsOpen] = useState(true);
   const [editOpenTime, setEditOpenTime] = useState('11:00');
@@ -31,20 +36,20 @@ export function Availability() {
   const generateCalendarDays = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    
+
     // First day of the month
     const firstDay = new Date(year, month, 1);
     const firstDayOfWeek = firstDay.getDay(); // 0 = Sunday
-    
+
     // Last day of the month
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    
+
     // Previous month days to fill the first week
     const prevMonthLastDay = new Date(year, month, 0).getDate();
-    
+
     const days = [];
-    
+
     // Add previous month's trailing days
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const date = new Date(year, month - 1, prevMonthLastDay - i);
@@ -54,30 +59,30 @@ export function Availability() {
         isCurrentMonth: false,
       });
     }
-    
+
     // Add current month's days
     const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dayOfWeek = date.getDay();
-      
+
       // Dummy logic: Wednesday (3) is closed, rest are open with default hours
       // TODO: Replace with actual API data
       const isClosed = dayOfWeek === 3; // Wednesday closed
-      
+
       days.push({
         date,
         isOpen: !isClosed,
         openTime: !isClosed ? '11:00' : undefined,
         closeTime: !isClosed ? '22:00' : undefined,
-        isToday: 
+        isToday:
           date.getDate() === today.getDate() &&
           date.getMonth() === today.getMonth() &&
           date.getFullYear() === today.getFullYear(),
         isCurrentMonth: true,
       });
     }
-    
+
     // Add next month's leading days to complete the grid
     const remainingDays = 42 - days.length; // 6 rows * 7 days
     for (let day = 1; day <= remainingDays; day++) {
@@ -88,7 +93,7 @@ export function Availability() {
         isCurrentMonth: false,
       });
     }
-    
+
     return days;
   };
 
@@ -97,7 +102,7 @@ export function Availability() {
 
   const handleDayClick = (day) => {
     if (!day.isCurrentMonth) return;
-    
+
     setSelectedDay(day);
     setEditIsOpen(day.isOpen);
     setEditOpenTime(day.openTime || '11:00');
@@ -105,22 +110,33 @@ export function Availability() {
     setEditModalOpen(true);
   };
 
-  const handleSaveAvailability = () => {
-    if (!selectedDay) return;
-    
-    // TODO: Save to API
-    console.log('Saving availability:', {
-      date: selectedDay.date,
-      isOpen: editIsOpen,
-      openTime: editIsOpen ? editOpenTime : null,
-      closeTime: editIsOpen ? editCloseTime : null,
-    });
-    
-    // Close modal
-    setEditModalOpen(false);
-    setSelectedDay(null);
-    
-    // TODO: Refresh calendar data
+  const handleSaveAvailability = async () => {
+    if (!selectedDay || !restaurantId) return;
+
+    // Format date as YYYY-MM-DD
+    const d = selectedDay.date;
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    const payload = {
+      date: dateStr,
+      open_time: editIsOpen ? editOpenTime : '',
+      close_time: editIsOpen ? editCloseTime : '',
+      is_closed: !editIsOpen,
+    };
+
+    console.log('[Availability] Saving:', payload);
+    setIsSaving(true);
+    try {
+      const response = await apiClient.post(AVAILABILITY_ENDPOINTS.SET(restaurantId), payload);
+      console.log('[Availability] Saved successfully:', response.data);
+      setEditModalOpen(false);
+      setSelectedDay(null);
+    } catch (error) {
+      console.error('[Availability] Failed to save:', error);
+      alert('Failed to save availability. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatTime = (time24) => {
@@ -154,7 +170,7 @@ export function Availability() {
             <h2 className="font-heading font-semibold text-foreground">
               {getMonthName(currentDate)}
             </h2>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={goToPreviousMonth}
@@ -163,14 +179,14 @@ export function Availability() {
               >
                 <ChevronLeft className="w-4 h-4 text-foreground" />
               </button>
-              
+
               <button
                 onClick={() => setCurrentDate(new Date())}
                 className="px-3 py-1.5 border border-border rounded-md hover:bg-muted/20 hover:border-foreground transition-all text-xs font-medium"
               >
                 Today
               </button>
-              
+
               <button
                 onClick={goToNextMonth}
                 className="px-2 py-1.5 border border-border rounded-md hover:bg-muted/20 hover:border-foreground transition-all cursor-pointer"
@@ -218,7 +234,7 @@ export function Availability() {
             {/* Calendar Days */}
             {calendarDays.map((day, index) => {
               const isLastInRow = (index + 1) % 7 === 0;
-              
+
               return (
                 <div
                   key={index}
@@ -236,13 +252,12 @@ export function Availability() {
                   {/* Date Number */}
                   <div className="flex items-center justify-between mb-1">
                     <span
-                      className={`text-sm ${
-                        day.isCurrentMonth
+                      className={`text-sm ${day.isCurrentMonth
                           ? day.isToday
                             ? 'text-primary'
                             : 'text-foreground'
                           : 'text-muted-foreground'
-                      }`}
+                        }`}
                     >
                       {day.date.getDate()}
                     </span>
@@ -307,11 +322,10 @@ export function Availability() {
                 </span>
                 <button
                   onClick={() => setEditIsOpen(!editIsOpen)}
-                  className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${
-                    editIsOpen
+                  className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${editIsOpen
                       ? 'bg-green-500 text-white hover:bg-green-600'
                       : 'bg-red-500 text-white hover:bg-red-600'
-                  }`}
+                    }`}
                 >
                   {editIsOpen ? 'Open' : 'Closed'}
                 </button>
@@ -357,9 +371,10 @@ export function Availability() {
               </button>
               <button
                 onClick={handleSaveAvailability}
-                className="flex-1 px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium"
+                disabled={isSaving}
+                className="flex-1 px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Changes
+                {isSaving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </div>
