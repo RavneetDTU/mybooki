@@ -23,6 +23,13 @@ const MOCK_USERS = [
         role: 'owner',
         restaurantId: '2',
     },
+    {
+        email: 'bjorn@gmail.com',
+        password: 'bjorn@123',
+        name: 'Bjorn',
+        role: 'owner',
+        restaurantId: '3',
+    },
 ];
 
 /**
@@ -90,5 +97,46 @@ export const authService = {
             throw new Error('Password must be at least 8 characters');
         }
         return { success: true, message: 'Password updated successfully' };
+    },
+
+    /**
+     * Register a new restaurant via multipart/form-data.
+     * POST https://register.jarviscalling.ai/api/register
+     *
+     * @param {Object} formData - All registration fields from the Signup form
+     * @param {File|null} verificationDoc - The uploaded document file
+     * @returns {Promise<{ message: string, registrationId: string }>}
+     */
+    register: async (formData, verificationDoc) => {
+        const body = new FormData();
+        body.append('name', formData.name);
+        body.append('email', formData.email);
+        body.append('password', formData.password);
+        body.append('restaurantName', formData.restaurantName);
+        body.append('restaurantEmail', formData.restaurantEmail);
+        body.append('restaurantPhone', formData.restaurantPhone);
+        body.append('restaurantAddress', formData.restaurantAddress);
+        body.append('contactName', formData.contactName);
+        body.append('contactPhone', formData.contactPhone);
+        body.append('contactEmail', formData.contactEmail);
+        if (verificationDoc) {
+            body.append('verificationDoc', verificationDoc);
+        }
+
+        console.log('[Auth] Submitting registration for:', formData.email);
+
+        const response = await fetch('https://register.jarviscalling.ai/api/register', {
+            method: 'POST',
+            body, // fetch sets Content-Type: multipart/form-data automatically
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data?.message || `Registration failed (${response.status})`);
+        }
+
+        console.log('[Auth] Registration response:', data);
+        return data; // { message, registrationId }
     },
 };
