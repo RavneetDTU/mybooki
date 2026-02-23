@@ -19,6 +19,11 @@ export const GUEST_ENDPOINTS = {
     UPDATE: (restaurantId, id) => `/restaurants/${restaurantId}/guests/${id}`,
 };
 
+// Availability Endpoints
+export const AVAILABILITY_ENDPOINTS = {
+    SET: (restaurantId) => `/restaurants/${restaurantId}/availability`,
+};
+
 // Address Endpoints
 export const ADDRESS_ENDPOINTS = {
     GET: (restaurantId) => `/restaurants/${restaurantId}/address`,
