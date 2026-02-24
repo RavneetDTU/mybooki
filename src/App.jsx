@@ -14,7 +14,7 @@ import { SetNumber } from './pages/SetNumber';
 import { Settings } from './pages/Settings';
 import { Stats } from './pages/Stats';
 import { Payments } from './pages/Payments';
-import BotSetting from './pages/BotSetting';
+import {BotSetting} from './pages/BotSetting';
 
 
 export default function App() {
