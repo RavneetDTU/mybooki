@@ -14,6 +14,7 @@ import { SetNumber } from './pages/SetNumber';
 import { Settings } from './pages/Settings';
 import { Stats } from './pages/Stats';
 import { Payments } from './pages/Payments';
+import BotSetting from './pages/BotSetting';
 
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
                   <Route path="/reservations" element={<Reservations />} />
                   <Route path="/guests" element={<Guests />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/botsettings" element={<BotSetting />} />
                   <Route path="/availability" element={<Availability />} />
                   <Route path="/set-number" element={<SetNumber />} />
                   <Route path="/stats" element={<Stats />} />
