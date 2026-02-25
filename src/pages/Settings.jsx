@@ -81,7 +81,7 @@ export function Settings() {
         <div className="min-h-screen bg-background">
             {/* Header */}
             <div className="border-b border-border bg-white">
-                <div className="max-w-5xl mx-auto px-6 py-4">
+                <div className="max-w-6xl mx-auto px-6 py-4">
                     <h1 className="font-heading font-semibold text-foreground">
                         Restaurant Settings
                     </h1>
@@ -92,7 +92,7 @@ export function Settings() {
             </div>
 
             {/* Content */}
-            <div className="max-w-5xl mx-auto px-6 py-5 space-y-5">
+            <div className="max-w-6xl mx-auto px-6 py-5 space-y-5">
 
                 {/* 1. Restaurant Address Section */}
                 <div className="bg-white border border-border rounded-lg overflow-hidden">
