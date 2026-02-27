@@ -5,6 +5,9 @@ import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import RegistrationPending from './pages/RegistrationPending';
+import LandingPage from './pages/LandingPage';
+import PrivacyPolicy from './components/landingpage/privacy-policy';
+import TermsAndConditions from './components/landingpage/terms-of-service';
 
 // DinePlan Pages
 import { Reservations } from './pages/Reservations';
@@ -17,15 +20,18 @@ import { Payments } from './pages/Payments';
 import {BotSetting} from './pages/BotSetting';
 
 
+
 export default function App() {
   return (
     <Router>
       <Routes>
         {/* --- Public Auth Pages (No Sidebar) --- */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LandingPage/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/registration-pending" element={<RegistrationPending />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsAndConditions />} />
 
         {/* --- Main App Layout (Sidebar + Content) --- */}
         {/* This catches all other paths (*) and renders the Sidebar layout */}
@@ -47,7 +53,7 @@ export default function App() {
                   <Route path="/payments" element={<Payments />} />
 
                   {/* Fallback: If path is unknown, go to Reservations */}
-                  <Route path="*" element={<Navigate to="/reservations" replace />} />
+                  {/* <Route path="*" element={<Navigate to="/reservations" replace />} /> */}
                 </Routes>
               </main>
             </div>
