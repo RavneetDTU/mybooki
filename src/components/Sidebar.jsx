@@ -20,9 +20,9 @@ function Sidebar() {
             {/* Logo - Updated to point to Reservations */}
             <div className="px-4 py-6 border-b border-sidebar-border">
                 <Link to="/reservations" className="text-lg font-heading font-semibold text-sidebar-foreground tracking-tight">
-                    Mybooki.ai
+                    Booki
                 </Link>
-                <p className="text-xs text-sidebar-foreground/50 mt-1">by JarvisCalling</p>
+                {/* <p className="text-xs text-sidebar-foreground/50 mt-1">by JarvisCalling</p> */}
             </div>
 
             {/* Navigation */}
@@ -53,7 +53,7 @@ function Sidebar() {
             {/* Footer - Removed "Switch Platform" since that page is gone */}
             <div className="px-4 py-3 border-t border-sidebar-border">
                 <p className="text-xs text-sidebar-foreground/50">
-                    © 2024 Mybooki.ai
+                    © 2024 Booki.ai
                 </p>
             </div>
         </aside>
