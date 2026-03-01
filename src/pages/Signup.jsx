@@ -146,7 +146,7 @@ export default function Signup() {
                 {/* Logo */}
                 <div className="mb-8 flex-shrink-0">
                     <Link to="/" className="text-2xl font-heading font-semibold tracking-tight text-foreground">
-                        Mybooki<span style={{ color: '#0f172a' }}>.ai</span>
+                        Booki <span style={{ color: '#0f172a' }}>.ai</span>
                     </Link>
                 </div>
 
@@ -405,7 +405,7 @@ export default function Signup() {
                 {/* Content */}
                 <div className="relative z-10 max-w-sm px-10 space-y-5">
                     <div className="mb-8">
-                        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-3">Why Mybooki.ai?</p>
+                        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-3">Why Booki.ai?</p>
                         <h2 className="text-3xl font-heading font-semibold text-foreground leading-snug">
                             Everything your restaurant needs,{' '}
                             <span style={{ color: '#3dd9d9' }}>in one place.</span>
@@ -439,7 +439,7 @@ export default function Signup() {
                             ))}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Join <span className="font-semibold text-foreground">200+</span> restaurants already using Mybooki.ai
+                            Join <span className="font-semibold text-foreground">200+</span> restaurants already using Booki.ai
                         </p>
                     </div>
                 </div>

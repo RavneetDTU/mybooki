@@ -36,7 +36,7 @@ export default function Login() {
             <div className="w-full lg:w-[480px] h-full flex flex-col justify-center px-8 lg:px-16 bg-white shrink-0 overflow-y-auto">
                 <div className="mb-12">
                     <Link to="/" className="text-2xl font-heading font-semibold tracking-tight text-foreground">
-                        Mybooki.ai
+                        Booki.ai
                     </Link>
                 </div>
 
@@ -138,7 +138,7 @@ export default function Login() {
                                 </svg>
                             </div>
                             <div>
-                                <h3 className="font-heading font-semibold mb-2">Instant Booking with Mybooki.ai</h3>
+                                <h3 className="font-heading font-semibold mb-2">Instant Booking with Booki.ai</h3>
                                 <p className="text-sm text-muted-foreground">
                                     Access your reservation system, and keep your restaurant running smoothly. Your tables are
                                     waiting.
