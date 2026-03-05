@@ -30,6 +30,13 @@ const MOCK_USERS = [
         role: 'owner',
         restaurantId: '3',
     },
+    {
+        email: 'wine@gmail.com',
+        password: 'wine@123',
+        name: 'Wine Tasting Terrance',
+        role: 'owner',
+        restaurantId: '4',
+    },
 ];
 
 /**
