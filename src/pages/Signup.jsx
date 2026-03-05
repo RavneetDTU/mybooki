@@ -132,7 +132,7 @@ export default function Signup() {
     };
 
     const inputCls = 'bg-white border-border focus-visible:border-slate-400 focus-visible:ring-[rgba(0,0,0,0.08)]';
-    const hintCls = 'text-xs text-muted-foreground mt-1 leading-snug';
+    const hintCls = 'text-xs text-muted-foreground mt-1 leading-snug text-red-400';
 
     return (
         /* Outer wrapper — full screen, no scroll */
@@ -246,11 +246,11 @@ export default function Signup() {
                                     <Label htmlFor="restaurantEmail">Restaurant Email <span className="text-red-500">*</span></Label>
                                     <Input id="restaurantEmail" type="email" placeholder="restaurant@email.com" value={formData.restaurantEmail} onChange={update('restaurantEmail')} className={inputCls} required />
                                 </div>
-                                <div className="space-y-1">
+                                <div className="space-y-1 text-red">
                                     <Label htmlFor="restaurantPhone">Restaurant Phone <span className="text-red-500">*</span></Label>
                                     <Input id="restaurantPhone" type="tel" placeholder="+1 (555) 000-0000" value={formData.restaurantPhone} onChange={update('restaurantPhone')} className={inputCls} required />
                                     <p className={hintCls}>
-                                        This number is used by our AI bot for outbound customer calls — ensure it's active and correct.
+                                       Note: This number is used by our AI bot for receiving inbound customer calls — ensure it's active and correct.
                                     </p>
                                 </div>
                             </div>
