@@ -40,3 +40,9 @@ export const TRANSCRIPTION_ENDPOINTS = {
 export const AUTH_ENDPOINTS = {
     UPDATE_PASSWORD: '/settings/password',
 };
+
+// Jarvis Config Endpoints
+export const JARVIS_CONFIG_ENDPOINTS = {
+    GET_DETAILS: (restaurantId) => `https://phone.jarviscalling.ai/api/restaurant/${restaurantId}/details`,
+    UPDATE: 'https://phone.jarviscalling.ai/update-config',
+};
