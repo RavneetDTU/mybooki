@@ -1,5 +1,5 @@
 import apiClient from './api/axios';
-import { ADDRESS_ENDPOINTS, AUTH_ENDPOINTS } from './api/endpoints';
+import { ADDRESS_ENDPOINTS, AUTH_ENDPOINTS, JARVIS_CONFIG_ENDPOINTS } from './api/endpoints';
 import { handleApiError } from '../utils/errorHandler';
 
 /**
@@ -68,6 +68,46 @@ export const settingsService = {
             return response.data;
         } catch (error) {
             const message = handleApiError(error, 'Failed to change password');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Get deposit amount from Jarvis config.
+     */
+    getDepositAmount: async (restaurantId) => {
+        try {
+            console.log('[Settings] Fetching Jarvis config for restaurantId:', restaurantId);
+            const response = await apiClient.get(JARVIS_CONFIG_ENDPOINTS.GET_DETAILS(restaurantId));
+            const data = response.data;
+            console.log('[Settings] Jarvis config response:', data);
+
+            // API returns: { name: "...", depositAmount: 500, currency: "rand" }
+            return data.depositAmount || '';
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to fetch deposit amount');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Update deposit amount in Jarvis config.
+     */
+    updateDepositAmount: async (restaurantId, amount) => {
+        try {
+            // request body needs to be exactly this structure
+            const payload = {
+                restaurantId: String(restaurantId),
+                settings: {
+                    depositAmount: Number(amount)
+                }
+            };
+            console.log('[Settings] Updating deposit amount:', payload);
+            const response = await apiClient.post(JARVIS_CONFIG_ENDPOINTS.UPDATE, payload);
+            console.log('[Settings] Deposit amount update response:', response.data);
+            return response.data;
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to update deposit amount');
             throw new Error(message);
         }
     },

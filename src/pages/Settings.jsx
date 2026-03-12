@@ -1,4 +1,4 @@
-import { MapPin, Mail, Lock, Save, Loader } from 'lucide-react';
+import { MapPin, Mail, Lock, Save, Loader, DollarSign } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { settingsService } from '../services/settings';
 import { useAuthStore } from '../store/useAuthStore';
@@ -9,6 +9,9 @@ export function Settings() {
     const [addressSaving, setAddressSaving] = useState(false);
     const [passwordSaving, setPasswordSaving] = useState(false);
     const [email, setEmail] = useState('');
+    const [depositAmount, setDepositAmount] = useState('');
+    const [depositLoading, setDepositLoading] = useState(true);
+    const [depositSaving, setDepositSaving] = useState(false);
 
     // Restaurant Address State
     const [address, setAddress] = useState({
@@ -39,9 +42,26 @@ export function Settings() {
         }
     }, [restaurantId]);
 
+    // Load deposit amount from API
+    const loadDepositAmount = useCallback(async () => {
+        if (!restaurantId) return;
+        setDepositLoading(true);
+        try {
+            const amount = await settingsService.getDepositAmount(restaurantId);
+            if (amount !== undefined && amount !== null) {
+                setDepositAmount(amount);
+            }
+        } catch (error) {
+            console.error('[Settings] Failed to load deposit amount:', error);
+        } finally {
+            setDepositLoading(false);
+        }
+    }, [restaurantId]);
+
     useEffect(() => {
         loadAddress();
-    }, [loadAddress]);
+        loadDepositAmount();
+    }, [loadAddress, loadDepositAmount]);
 
     const handleSaveAddress = async () => {
         setAddressSaving(true);
@@ -53,6 +73,19 @@ export function Settings() {
             alert('Failed to update address');
         } finally {
             setAddressSaving(false);
+        }
+    };
+
+    const handleSaveDepositAmount = async () => {
+        setDepositSaving(true);
+        try {
+            await settingsService.updateDepositAmount(restaurantId, depositAmount);
+            alert('Deposit amount updated successfully!');
+        } catch (error) {
+            console.error('[Settings] Failed to save deposit amount:', error);
+            alert('Failed to update deposit amount');
+        } finally {
+            setDepositSaving(false);
         }
     };
 
@@ -224,7 +257,71 @@ export function Settings() {
                     </div>
                 </div>
 
-                {/* 3. Change Password Section */}
+                {/* 3. Deposit Amount Section */}
+                <div className="bg-white border border-border rounded-lg overflow-hidden">
+                    <div className="bg-muted/30 border-b border-border px-5 py-3">
+                        <div className="flex items-center gap-2">
+                            {/* <DollarSign className="w-4 h-4 text-foreground" /> */}
+                            <h2 className="font-heading font-semibold text-foreground">
+                                Deposit Amount
+                            </h2>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Set the required deposit amount for reservations
+                        </p>
+                    </div>
+
+                    <div className="p-5">
+                        {depositLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader className="w-5 h-5 animate-spin text-muted-foreground" />
+                                <span className="ml-2 text-sm text-muted-foreground">Loading amount…</span>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1.5">
+                                    Amount in Rands
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R</span>
+                                    <input
+                                        type="number"
+                                        value={depositAmount}
+                                        onChange={(e) => setDepositAmount(e.target.value)}
+                                        min="0"
+                                        step="any"
+                                        className="w-full pl-7 pr-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                
+                                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-amber-900 mb-1.5">Important Instructions:</p>
+                                    <ul className="text-xs text-amber-800 space-y-0.5">
+                                        <li>• This exact amount will be required from customers to secure a booking.</li>
+                                        <li>• Changes made here will reflect immediately on your live booking page.</li>
+                                        <li>• Please avoid frequent or unnecessary changes to prevent customer confusion.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end mt-4 pt-4 border-t border-border">
+                            <button
+                                onClick={handleSaveDepositAmount}
+                                disabled={depositLoading || depositSaving}
+                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {depositSaving
+                                    ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
+                                    : <><Save className="w-4 h-4" /> Save Amount</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Change Password Section */}
                 <div className="bg-white border border-border rounded-lg overflow-hidden">
                     <div className="bg-muted/30 border-b border-border px-5 py-3">
                         <div className="flex items-center gap-2">
