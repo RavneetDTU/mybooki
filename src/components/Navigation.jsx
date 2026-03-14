@@ -13,7 +13,7 @@ function Navigation() {
             <div className="container mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
                     <Link to="/" className="text-xl font-heading font-semibold">
-                        JarvisCalling.ai
+                        Booki.ai
                     </Link>
                     <div className="flex items-center gap-4">
                         <Link

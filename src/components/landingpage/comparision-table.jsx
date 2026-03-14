@@ -93,7 +93,7 @@ export const ComparisonTable = () => {
           {/* Desktop Headings Row */}
           <div className="grid grid-cols-3 gap-6 items-start font-semibold text-gray-900">
             <div className="text-start pl-2">Feature</div>
-            <div className="text-start pl-2">Jarvis AI</div>
+            <div className="text-start pl-2">Booki AI</div>
             <div className="text-start pl-2">Traditional Support</div>
           </div>
       

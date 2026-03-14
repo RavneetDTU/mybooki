@@ -17,7 +17,7 @@ export default function Footer() {
                             Ready to Automate Your Restaurant?
                         </h2>
                         <p className="text-sm sm:text-base text-white/60 leading-relaxed">
-                            Join 500+ restaurants using Jarvis AI to handle calls, bookings, and WhatsApp — 24/7.
+                            Join 500+ restaurants using Booki AI to handle calls, bookings, and WhatsApp — 24/7.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                             <button
@@ -46,7 +46,7 @@ export default function Footer() {
                                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                                 </svg>
                             </div>
-                            <span className="text-lg font-semibold text-white">Jarvis AI</span>
+                            <span className="text-lg font-semibold text-white">Booki AI</span>
                         </div>
                         <p className="text-sm text-white/50 leading-relaxed max-w-xs">
                             AI-powered phone and WhatsApp agents built for the restaurant industry.
@@ -84,7 +84,7 @@ export default function Footer() {
                                     <rect width="20" height="16" x="2" y="4" rx="2" />
                                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                                 </svg>
-                                <span className="text-sm text-white/50">support@jarviscalling.ai</span>
+                                <span className="text-sm text-white/50">support@booki.ai</span>
                             </li>
                         </ul>
                         {/* Social Icons */}
@@ -117,7 +117,7 @@ export default function Footer() {
                 {/* Bottom Bar */}
                 <div className="py-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p className="text-xs text-white/40">
-                        © {currentYear} Jarvis AI. All rights reserved.
+                        © {currentYear} Booki AI. All rights reserved.
                     </p>
                     <div className="flex items-center space-x-6">
                         <a href="/privacy-policy" className="text-xs text-white/40 hover:text-white/60 transition-colors cursor-pointer">Privacy Policy</a>

@@ -182,7 +182,7 @@ export default function LandingPage() {
                             </a>
                         </div>
                         <div className="flex flex-col">
-                            <p>Jarvis AI is ready to take your call! </p>
+                            <p>Booki AI is ready to take your call! </p>
                             <p>📞 US: +1 503 748 3026 </p>
                             <p>📞 South Africa: +27 87 250 2261</p>
                         </div>
