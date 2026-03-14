@@ -11,7 +11,7 @@ function CustomerReview() {
             name: "Maria Rodriguez",
             city: "Miami, FL",
             rating: 5,
-            quote: "Jarvis AI transformed our restaurant. We never miss reservations anymore!",
+            quote: "Booki AI transformed our restaurant. We never miss reservations anymore!",
             avatar: "MR",
         },
         {
