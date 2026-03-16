@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "./Navigation";
 import EnhancedVoiceAnimation from "./landingpage/enhanced-voice-animation";
 import AnimatedBackground from "./landingpage/animated-background";
@@ -12,6 +12,17 @@ import JarvisWidget from "./landingpage/jarvis-widget";
 
 export default function LandingPage() {
     const { openEarlyAccess, openBookSetup } = useModalStore();
+
+    useEffect(() => {
+        const handler = (event) => {
+            if (event.data?.type !== "jarvis-inline-resize") return;
+            const frame = document.getElementById("jarvis-inline-frame");
+            if (!frame) return;
+            frame.style.height = event.data.expanded ? "230px" : "52px";
+        };
+        window.addEventListener("message", handler);
+        return () => window.removeEventListener("message", handler);
+    }, []);
 
     const features = [
         {
@@ -169,14 +180,32 @@ export default function LandingPage() {
                         <EnhancedVoiceAnimation />
 
                         <div className="w-fit flex items-center gap-4 md:gap-6">
-
+                            {/* ── Jarvis inline widget ── */}
+                            <iframe
+                                src="https://openai-widgets-ten.vercel.app/embed/inline"
+                                allow="microphone; screen-wake-lock"
+                                title="Jarvis AI Demo"
+                                id="jarvis-inline-frame"
+                                scrolling="no"
+                                style={{
+                                    border: "none",
+                                    background: "transparent",
+                                    width: "200px",
+                                    height: "68px",
+                                    display: "inline-block",
+                                    verticalAlign: "middle",
+                                    overflow: "hidden",
+                                    transition: "height 0.35s ease",
+                                    pointerEvents: "auto",
+                                }}
+                            />
 
                             <a
                                 href="https://wa.me/919728000432?text=Hi%2C%20I%20want%20to%20book%20a%20table"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <button className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white md:px-6 md:py-3 px-3 py-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-xl cursor-pointer">
+                                <button className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white md:px-6 md:py-[16px] px-3 py-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-xl cursor-pointer">
                                     Chat on WhatsApp
                                 </button>
                             </a>
@@ -237,8 +266,8 @@ export default function LandingPage() {
             <EarlyAccessModal />
             <BookSetupModal />
 
-            {/* Jarvis AI floating widget */}
-            <JarvisWidget position="bottom-right" theme="light" />
+            {/* Jarvis AI floating widget
+            <JarvisWidget position="bottom-right" theme="light" /> */}
         </div>
     );
 }
