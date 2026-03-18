@@ -41,6 +41,11 @@ export const AUTH_ENDPOINTS = {
     UPDATE_PASSWORD: '/settings/password',
 };
 
+// Payment Endpoints
+export const PAYMENT_ENDPOINTS = {
+    GET_BY_RESTAURANT: (restaurantId) => `https://phone.jarviscalling.ai/api/payfast/payments/${restaurantId}`,
+};
+
 // Jarvis Config Endpoints
 export const JARVIS_CONFIG_ENDPOINTS = {
     GET_DETAILS: (restaurantId) => `https://phone.jarviscalling.ai/api/restaurant/${restaurantId}/details`,
