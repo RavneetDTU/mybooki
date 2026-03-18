@@ -13,6 +13,11 @@ export const RESERVATION_ENDPOINTS = {
     DELETE: (restaurantId, id) => `/restaurants/${restaurantId}/reservations/${id}`,
 };
 
+// Failed Bookings Endpoints
+export const FAILED_BOOKINGS_ENDPOINTS = {
+    GET_BY_DATE: (restaurantId) => `/restaurants/${restaurantId}/failed-bookings`,
+};
+
 // Guest Endpoints
 export const GUEST_ENDPOINTS = {
     GET_ALL: (restaurantId) => `/restaurants/${restaurantId}/guests`,

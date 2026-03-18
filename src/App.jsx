@@ -18,6 +18,7 @@ import { Settings } from './pages/Settings';
 import { Stats } from './pages/Stats';
 import { Payments } from './pages/Payments';
 import {BotSetting} from './pages/BotSetting';
+import FailedBookings from './pages/FailedBookings';
 
 
 
@@ -51,6 +52,7 @@ export default function App() {
                   <Route path="/set-number" element={<SetNumber />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/payments" element={<Payments />} />
+                  <Route path="/failed-bookings" element={<FailedBookings />} />
 
                   {/* Fallback: If path is unknown, go to Reservations */}
                   {/* <Route path="*" element={<Navigate to="/reservations" replace />} /> */}
