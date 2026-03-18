@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, Settings, BarChart3, Clock, Phone, CreditCard, Bot } from 'lucide-react';
+import { Calendar, Users, Settings, BarChart3, Clock, Phone, CreditCard, Bot, PhoneOff } from 'lucide-react';
 
 function Sidebar() {
     const location = useLocation();
 
     const navItems = [
         { path: '/reservations', label: 'Reservations', icon: Calendar },
+        { path: '/failed-bookings', label: 'Failed Bookings', icon: PhoneOff },
         { path: '/stats', label: 'Stats', icon: BarChart3 },
         { path: '/guests', label: 'Guests', icon: Users },
         { path: '/availability', label: 'Availability', icon: Clock },
