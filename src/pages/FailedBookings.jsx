@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, PhoneOff, Calendar, Clock, Phone, MessageSquare, AlertTriangle } from 'lucide-react';
 import { failedBookingsService } from '../services/failedBookings';
 import { useAuthStore } from '../store/useAuthStore';
+import { formatTime12Hour } from '../utils/dateUtils';
 
 // Compact inline badge for missing fields
 const MissingBadge = () => (
@@ -39,7 +40,7 @@ const FailedBookingModal = ({ isOpen, onClose, booking }) => {
                                 Failed Booking Details
                             </h3>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Call on {booking.call_date} at {booking.call_time}
+                                Call on {booking.call_date} at {formatTime12Hour(booking.call_time)}
                             </p>
                         </div>
                         <button
@@ -73,7 +74,7 @@ const FailedBookingModal = ({ isOpen, onClose, booking }) => {
                          </div>
                          <div>
                             <p className="text-xs text-muted-foreground mb-1">Requested Time</p>
-                            <p className="text-sm font-medium">{display(booking.time)}</p>
+                            <p className="text-sm font-medium">{display(formatTime12Hour(booking.time))}</p>
                          </div>
                     </div>
 
@@ -276,7 +277,7 @@ export default function FailedBookings() {
                                         {/* Call Time */}
                                         <div className="flex items-center gap-2 min-w-[80px]">
                                             <Clock className="w-4 h-4 text-muted-foreground" />
-                                            <span className="text-foreground">{booking.call_time}</span>
+                                            <span className="text-foreground">{formatTime12Hour(booking.call_time)}</span>
                                         </div>
 
                                         {/* Name */}

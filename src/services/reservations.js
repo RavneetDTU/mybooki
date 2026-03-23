@@ -145,6 +145,23 @@ export const reservationService = {
     },
 
     /**
+     * Send external notification for a manual booking
+     * @param {Object} payload 
+     * @param {string} restaurantId 
+     */
+    sendManualBookingNotification: async (payload, restaurantId) => {
+        try {
+            const API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:9000';
+            const endpoint = `${API_URL}/api/booking/manual/${restaurantId}`;
+            const response = await apiClient.post(endpoint, payload);
+            return response.data;
+        } catch (error) {
+            console.error('Failed to send manual booking notification:', error);
+            // Non-blocking error
+        }
+    },
+
+    /**
      * Update an existing reservation.
      * @param {string} id
      * @param {Object} updateData

@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Phone, Users, Calendar, X, Clock, Plus } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { reservationService } from '../services/reservations';
+import { formatTime12Hour } from '../utils/dateUtils';
 import { useAuthStore } from '../store/useAuthStore';
 import ConversationModal from '../components/ConversationModal';
 import CreateReservationModal from '../components/CreateReservationModal';
@@ -259,7 +260,7 @@ export function Reservations() {
                                             {/* Time with icon */}
                                             <div className="flex items-center gap-2 min-w-[80px]">
                                                 <Users className="w-4 h-4 text-muted-foreground" />
-                                                <span className=" text-foreground">{time}</span>
+                                                <span className=" text-foreground">{formatTime12Hour(time)}</span>
                                             </div>
 
                                             {/* Name */}
@@ -316,7 +317,7 @@ export function Reservations() {
                                                     {/* Time with icon (shown on each row) */}
                                                     <div className="flex items-center gap-2 min-w-[80px]">
                                                         <Users className="w-4 h-4 text-muted-foreground" />
-                                                        <span className="text-foreground">{time}</span>
+                                                        <span className="text-foreground">{formatTime12Hour(time)}</span>
                                                     </div>
 
                                                     {/* Name */}
@@ -367,7 +368,7 @@ export function Reservations() {
                                     {!hasBookings && (
                                         <div className="flex items-center gap-2 px-4 py-3">
                                             <Users className="w-4 h-4 text-muted-foreground" />
-                                            <span className=" text-foreground">{time}</span>
+                                            <span className=" text-foreground">{formatTime12Hour(time)}</span>
                                             <span className="text-sm text-muted-foreground ml-auto">Available</span>
                                         </div>
                                     )}
