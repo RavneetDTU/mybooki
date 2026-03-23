@@ -1,7 +1,12 @@
 import { X, Calendar, Clock, Users, Phone, User, FileText } from 'lucide-react';
 import { useState } from 'react';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { useAuthStore } from '../store/useAuthStore';
+import { reservationService } from '../services/reservations';
 
 export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
+    const { restaurantId } = useAuthStore();
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -37,6 +42,23 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
             };
 
             await onSuccess(reservationData);
+
+            // Additional Manual Booking API Call
+            const manualBookingPayload = {
+                name: formData.name,
+                phoneNo: formData.phone,
+                guests: parseInt(formData.party_size),
+                date: formData.date,
+                time: formData.time,
+                allergy: formData.allergies || null,
+                Notes: formData.notes || null,
+            };
+
+            try {
+                await reservationService.sendManualBookingNotification(manualBookingPayload, restaurantId);
+            } catch (err) {
+                console.error('Failed to notify external manual booking API', err);
+            }
 
             // Reset form
             setFormData({
@@ -109,13 +131,13 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
                             <Phone className="w-4 h-4" />
                             Phone Number *
                         </label>
-                        <input
-                            type="tel"
+                        <PhoneInput
+                            international
+                            defaultCountry="US"
                             value={formData.phone}
-                            onChange={(e) => handleChange('phone', e.target.value)}
-                            className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
-                            placeholder="+1234567890"
-                            required
+                            onChange={(value) => handleChange('phone', value || '')}
+                            className="w-full px-3 py-2 border border-border rounded-md text-sm focus-within:ring-2 focus-within:ring-foreground focus-within:border-foreground transition-all [&_input]:outline-none [&_input]:bg-transparent"
+                            placeholder="+1 234 567 8900"
                         />
                     </div>
 

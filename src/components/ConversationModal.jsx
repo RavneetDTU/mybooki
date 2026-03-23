@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import apiClient from '../services/api/axios';
 import { TRANSCRIPTION_ENDPOINTS } from '../services/api/endpoints';
 import { handleApiError } from '../utils/errorHandler';
+import { formatTime12Hour } from '../utils/dateUtils';
 
 /**
  * ConversationModal
@@ -101,7 +102,7 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                             </div>
                             <div className="text-right text-xs text-muted-foreground">
                                 <p className="font-medium text-foreground">
-                                    {display(reservation.date)} &nbsp; {display(reservation.time)}
+                                    {display(reservation.date)} &nbsp; {display(reservation.time ? formatTime12Hour(reservation.time) : null)}
                                 </p>
                                 <p>Party of {display(reservation.guests)}</p>
                             </div>
