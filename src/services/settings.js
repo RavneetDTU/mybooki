@@ -79,12 +79,11 @@ export const settingsService = {
         try {
             console.log('[Settings] Fetching Jarvis config for restaurantId:', restaurantId);
             const response = await apiClient.get(JARVIS_CONFIG_ENDPOINTS.GET_DETAILS(restaurantId));
-            console.log('[Settings] Jarvis config response:', response);
             const data = response.data;
-            console.log('[Settings] Jarvis config data settings:', data.settings);
+            console.log('[Settings] Jarvis config response:', data);
 
             // API returns: { name: "...", depositAmount: 500, currency: "rand" }
-            return data.settings.depositAmount || '';
+            return data.depositAmount || '';
         } catch (error) {
             const message = handleApiError(error, 'Failed to fetch deposit amount');
             throw new Error(message);
@@ -109,41 +108,6 @@ export const settingsService = {
             return response.data;
         } catch (error) {
             const message = handleApiError(error, 'Failed to update deposit amount');
-            throw new Error(message);
-        }
-    },
-
-    /**
-     * Get Bot Configuration (question flow)
-     */
-    getBotConfig: async (restaurantId) => {
-        try {
-           // const API_URL = import.meta.env.VITE_BOT_API_URL || 'http://localhost:9000';
-            // const endpoint = `${API_URL}/api/restaurant/${restaurantId}/details`;
-            const response = await apiClient.get(JARVIS_CONFIG_ENDPOINTS.GET_DETAILS(restaurantId));
-            return response.data;
-        } catch (error) {
-            const message = handleApiError(error, 'Failed to fetch bot configuration');
-            throw new Error(message);
-        }
-    },
-
-    /**
-     * Update Bot Configuration (question flow)
-     */
-    updateBotConfig: async (restaurantId, questionFlow) => {
-        try {
-           // const API_URL = import.meta.env.VITE_BOT_API_URL || 'http://localhost:9000';
-           // const endpoint = `${API_URL}/update-config`;
-            const payload = {
-                restaurantId: String(restaurantId),
-                questionFlow: questionFlow
-            };
-            // Note: Update endpoints often use POST or PUT. From instructions, seems body contains restro ID. POST is safest.
-            const response = await apiClient.post(JARVIS_CONFIG_ENDPOINTS.UPDATE, payload);
-            return response.data;
-        } catch (error) {
-            const message = handleApiError(error, 'Failed to update bot configuration');
             throw new Error(message);
         }
     },
