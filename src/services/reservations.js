@@ -136,7 +136,7 @@ export const reservationService = {
             const API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:9000';
             const endpoint = `${API_URL}/api/booking/manual/${restaurantId}`;
             const response = await apiClient.post(endpoint, reservationData);
-            return response.data;
+            return response.data; 
         } catch (error) {
             const message = handleApiError(error, 'Failed to create manual reservation');
             throw new Error(message);
