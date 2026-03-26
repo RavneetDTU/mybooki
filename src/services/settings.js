@@ -83,7 +83,7 @@ export const settingsService = {
             console.log('[Settings] Jarvis config response:', data);
 
             // API returns: { name: "...", depositAmount: 500, currency: "rand" }
-            return data.depositAmount || '';
+            return data.settings.depositAmount || '';
         } catch (error) {
             const message = handleApiError(error, 'Failed to fetch deposit amount');
             throw new Error(message);
