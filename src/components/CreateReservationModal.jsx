@@ -3,7 +3,6 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAuthStore } from '../store/useAuthStore';
-import { reservationService } from '../services/reservations';
 
 export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
     const { restaurantId } = useAuthStore();
@@ -29,22 +28,7 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
 
         setIsSubmitting(true);
         try {
-            // Prepare data for API — matches POST /restaurants/:id/reservations body
-            const reservationData = {
-                name: formData.name,
-                phone: formData.phone,
-                date: formData.date,
-                time: formData.time,
-                party_size: parseInt(formData.party_size),
-                allergies: formData.allergies || 'NA',
-                notes: formData.notes || 'NA',
-                transcription: 'manually created',
-            };
-
-            await onSuccess(reservationData);
-
-            // Additional Manual Booking API Call
-            const manualBookingPayload = {
+            const payload = {
                 name: formData.name,
                 phoneNo: formData.phone,
                 guests: parseInt(formData.party_size),
@@ -54,11 +38,7 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
                 Notes: formData.notes || null,
             };
 
-            try {
-                await reservationService.sendManualBookingNotification(manualBookingPayload, restaurantId);
-            } catch (err) {
-                console.error('Failed to notify external manual booking API', err);
-            }
+            await onSuccess(payload);
 
             // Reset form
             setFormData({
