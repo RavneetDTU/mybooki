@@ -53,7 +53,7 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg border border-border max-w-3xl w-full max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-lg border border-border max-w-3xl w-full min-h-[500px] max-h-[90vh] flex flex-col shadow-xl transform transition-all duration-300">
 
                 {/* ── Header ── */}
                 <div className="border-b border-border px-5 py-4">
@@ -87,18 +87,13 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                                 >
                                     {display(reservation.status)}
                                 </span>
-                                <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded capitalize">
-                                    {display(reservation.source)}
+                                <span className={`px-2.5 py-1 text-xs font-medium rounded ${
+                                    reservation.paymentStatus === 'Payment Success' 
+                                        ? 'bg-blue-100 text-blue-700' 
+                                        : 'bg-orange-100 text-orange-700'
+                                }`}>
+                                    {reservation.paymentStatus === 'Payment Success' ? 'Payment Success' : 'Payment Pending'}
                                 </span>
-                                {reservation.tableNumber ? (
-                                    <span className="px-2.5 py-1 bg-foreground text-white text-xs font-medium rounded">
-                                        Table {reservation.tableNumber}
-                                    </span>
-                                ) : (
-                                    <span className="px-2.5 py-1 border border-border text-muted-foreground text-xs font-medium rounded">
-                                        No Table
-                                    </span>
-                                )}
                             </div>
                             <div className="text-right text-xs text-muted-foreground">
                                 <p className="font-medium text-foreground">
@@ -111,17 +106,18 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                 </div>
 
                 {/* ── Body ── */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto relative">
                     {loading ? (
-                        <div className="flex items-center justify-center h-64">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center min-h-[300px]">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mb-4" />
+                            <p className="text-sm text-muted-foreground animate-pulse">Loading reservation details...</p>
                         </div>
                     ) : error ? (
-                        <div className="text-center py-12 text-red-500 px-6">
+                        <div className="flex items-center justify-center h-full min-h-[300px] text-red-500 px-6">
                             <p className="text-sm">{error}</p>
                         </div>
                     ) : (
-                        <div className="p-5 space-y-4">
+                        <div className="p-5 space-y-4 animate-in fade-in duration-300">
                             {/* Transcription */}
                             <div className="flex items-center gap-2 mb-3">
                                 <MessageSquare className="w-4 h-4 text-foreground" />
@@ -145,6 +141,39 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                                     <p className="text-sm font-medium text-foreground">{reservation.notes}</p>
                                 </div>
                             )}
+
+                            {/* Payment Details */}
+                            <div className="bg-white border border-border rounded-lg p-4 py-4">
+                                <h4 className="text-sm font-semibold text-foreground mb-3">Payment Information</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                                        <p className="text-sm font-medium text-foreground">
+                                            {reservation?.paymentAmount ? `${reservation.paymentCurrency || ''} ${reservation.paymentAmount}` : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Method</p>
+                                        <p className="text-sm font-medium text-foreground">
+                                            {display(reservation?.paymentMethod)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Date & Time</p>
+                                        <p className="text-sm font-medium text-foreground">
+                                            {reservation?.paymentDate 
+                                                ? `${reservation.paymentDate} ${reservation.paymentTime || ''}` 
+                                                : 'N/A'}
+                                        </p>
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <p className="text-xs text-muted-foreground mb-1">Reference ID</p>
+                                        <p className="text-sm font-medium text-foreground truncate" title={reservation?.paymentId || 'N/A'}>
+                                            {display(reservation?.paymentId)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

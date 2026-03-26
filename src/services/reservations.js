@@ -41,6 +41,14 @@ export const reservationService = {
                 notes: reservation.notes,
                 guestData: reservation.guest,
                 callData: reservation.call,
+                paymentStatus: reservation.payment_status,
+                paymentMethod: reservation.payment_method,
+                paymentAmount: reservation.payment_amount,
+                paymentCurrency: reservation.payment_currency,
+                paymentDate: reservation.payment_date,
+                paymentTime: reservation.payment_time,
+                paymentId: reservation.payment_id,
+                paymentNotes: reservation.payment_notes,
             }));
 
             return {
