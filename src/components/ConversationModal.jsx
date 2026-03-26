@@ -19,6 +19,7 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
 
     // reservation.bookingId holds the booking ID like "BK-A0E78660" (from booking_id in API)
     const bookingId = reservation?.bookingId;
+    console.log('reservation details :', reservation)
 
     useEffect(() => {
         if (isOpen && bookingId && restaurantId) {
@@ -80,7 +81,7 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className={`px-2.5 py-1 text-xs font-medium rounded capitalize
-                                    ${reservation.status === 'confirmed' ? 'bg-green-100 text-green-700'
+                                    ${reservation.status === 'Confirmed' ? 'bg-green-100 text-green-700'
                                         : reservation.status === 'cancelled' ? 'bg-red-100 text-red-700'
                                             : reservation.status === 'no_show' ? 'bg-orange-100 text-orange-700'
                                                 : 'bg-gray-100 text-gray-600'}`}
