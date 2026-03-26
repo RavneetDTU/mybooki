@@ -113,11 +113,12 @@ export default function CreateReservationModal({ isOpen, onClose, onSuccess }) {
                         </label>
                         <PhoneInput
                             international
-                            defaultCountry="US"
+                            defaultCountry="ZA"
+                            countries={['US', 'ZA', 'IN']}
                             value={formData.phone}
                             onChange={(value) => handleChange('phone', value || '')}
                             className="w-full px-3 py-2 border border-border rounded-md text-sm focus-within:ring-2 focus-within:ring-foreground focus-within:border-foreground transition-all [&_input]:outline-none [&_input]:bg-transparent"
-                            placeholder="+1 234 567 8900"
+                            placeholder="+27 234 567 890"
                         />
                     </div>
 
