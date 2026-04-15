@@ -44,7 +44,7 @@ export function BotSetting() {
           setLoading(false);
         });
     }
-  }, [restaurantId]);
+  }, [restaurantId]); 
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.effectAllowed = 'move';
