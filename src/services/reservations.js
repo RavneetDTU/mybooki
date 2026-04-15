@@ -41,6 +41,14 @@ export const reservationService = {
                 notes: reservation.notes,
                 guestData: reservation.guest,
                 callData: reservation.call,
+                paymentStatus: reservation.payment_status,
+                paymentMethod: reservation.payment_method,
+                paymentAmount: reservation.payment_amount,
+                paymentCurrency: reservation.payment_currency,
+                paymentDate: reservation.payment_date,
+                paymentTime: reservation.payment_time,
+                paymentId: reservation.payment_id,
+                paymentNotes: reservation.payment_notes,
             }));
 
             return {
@@ -127,37 +135,19 @@ export const reservationService = {
     },
 
     /**
-     * Create a manual reservation.
-     * @param {Object} reservationData
-     * @param {string} restaurantId
+     * Create a manual reservation (also triggers notification externally).
+     * @param {Object} reservationData - Payload for manual booking
+     * @param {string} restaurantId - Restaurant ID
      */
     createManualReservation: async (reservationData, restaurantId) => {
         try {
-            const response = await apiClient.post(
-                RESERVATION_ENDPOINTS.CREATE(restaurantId),
-                reservationData
-            );
-            return response.data;
+            const API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:9000';
+            const endpoint = `${API_URL}/api/booking/manual/${restaurantId}`;
+            const response = await apiClient.post(endpoint, reservationData);
+            return response.data; 
         } catch (error) {
             const message = handleApiError(error, 'Failed to create manual reservation');
             throw new Error(message);
-        }
-    },
-
-    /**
-     * Send external notification for a manual booking
-     * @param {Object} payload 
-     * @param {string} restaurantId 
-     */
-    sendManualBookingNotification: async (payload, restaurantId) => {
-        try {
-            const API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:9000';
-            const endpoint = `${API_URL}/api/booking/manual/${restaurantId}`;
-            const response = await apiClient.post(endpoint, payload);
-            return response.data;
-        } catch (error) {
-            console.error('Failed to send manual booking notification:', error);
-            // Non-blocking error
         }
     },
 

@@ -270,6 +270,15 @@ export function Reservations() {
                                                 </p>
                                             </div>
 
+                                            {/* Payment Status Badge */}
+                                            <div className={`flex items-center px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md border ${
+                                                bookingsWithNames[0].paymentStatus === 'Payment Success' 
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-200/50' 
+                                                    : 'bg-orange-50 text-orange-700 border-orange-200/50'
+                                            }`}>
+                                                {bookingsWithNames[0].paymentStatus === 'Payment Success' ? 'Payment Success' : 'Payment Pending'}
+                                            </div>
+
                                             {/* Guest Count */}
                                             <div className="flex items-center gap-1.5 px-3 py-1 bg-muted rounded-md">
                                                 <Phone className="w-3.5 h-3.5 text-foreground" />
@@ -325,6 +334,15 @@ export function Reservations() {
                                                         <p className="font-medium text-foreground">
                                                             {reservation.bookerName}
                                                         </p>
+                                                    </div>
+
+                                                    {/* Payment Status Badge */}
+                                                    <div className={`flex items-center px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md border ${
+                                                        reservation.paymentStatus === 'Payment Success' 
+                                                            ? 'bg-blue-50 text-blue-700 border-blue-200/50' 
+                                                            : 'bg-orange-50 text-orange-700 border-orange-200/50'
+                                                    }`}>
+                                                        {reservation.paymentStatus === 'Payment Success' ? 'Payment Success' : 'Payment Pending'}
                                                     </div>
 
                                                     {/* Guest Count */}

@@ -54,7 +54,5 @@ export const PAYMENT_ENDPOINTS = {
 // Jarvis Config Endpoints
 export const JARVIS_CONFIG_ENDPOINTS = {
     GET_DETAILS: (restaurantId) => `https://phone.jarviscalling.ai/api/restaurant/${restaurantId}/details`,
-    UPDATE: 'https://phone.jarviscalling.ai/api/update-config',
+    UPDATE: 'https://phone.jarviscalling.ai/update-config',
 };
-
-
