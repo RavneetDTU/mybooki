@@ -111,4 +111,37 @@ export const settingsService = {
             throw new Error(message);
         }
     },
+
+    /**
+     * Get Bot Configuration (question flow).
+     * GET /api/restaurant/:restaurantId/details
+     */
+    getBotConfig: async (restaurantId) => {
+        try {
+            const response = await apiClient.get(JARVIS_CONFIG_ENDPOINTS.GET_DETAILS(restaurantId));
+            return response.data;
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to fetch bot configuration');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Update Bot Configuration (question flow).
+     * POST /api/update-config
+     * Body: { restaurantId, questionFlow }
+     */
+    updateBotConfig: async (restaurantId, questionFlow) => {
+        try {
+            const payload = {
+                restaurantId: String(restaurantId),
+                questionFlow: questionFlow,
+            };
+            const response = await apiClient.post(JARVIS_CONFIG_ENDPOINTS.UPDATE, payload);
+            return response.data;
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to update bot configuration');
+            throw new Error(message);
+        }
+    },
 };
