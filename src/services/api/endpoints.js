@@ -46,13 +46,20 @@ export const AUTH_ENDPOINTS = {
     UPDATE_PASSWORD: '/settings/password',
 };
 
+// Jarvis Base URL configuration: Automatically switches between localhost for development and live for production
+const JARVIS_BASE_URL = import.meta.env.MODE === 'development' 
+    ? 'http://localhost:9000' 
+    : 'https://phone.jarviscalling.ai';
+
 // Payment Endpoints
 export const PAYMENT_ENDPOINTS = {
-    GET_BY_RESTAURANT: (restaurantId) => `https://phone.jarviscalling.ai/api/payfast/payments/${restaurantId}`,
+    GET_BY_RESTAURANT: (restaurantId) => `${JARVIS_BASE_URL}/api/payfast/payments/${restaurantId}`,
 };
 
 // Jarvis Config Endpoints
 export const JARVIS_CONFIG_ENDPOINTS = {
-    GET_DETAILS: (restaurantId) => `https://phone.jarviscalling.ai/api/restaurant/${restaurantId}/details`,
-    UPDATE: 'https://phone.jarviscalling.ai/api/update-config',
+    GET_DETAILS: (restaurantId) => `${JARVIS_BASE_URL}/api/restaurant/${restaurantId}/details`,
+    UPDATE: `${JARVIS_BASE_URL}/api/update-config`,
+    ADD_QUESTION: `${JARVIS_BASE_URL}/api/question/add`,
+    DELETE_QUESTION: `${JARVIS_BASE_URL}/api/question/delete`,
 };

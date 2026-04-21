@@ -126,11 +126,6 @@ export const settingsService = {
         }
     },
 
-    /**
-     * Update Bot Configuration (question flow).
-     * POST /api/update-config
-     * Body: { restaurantId, questionFlow }
-     */
     updateBotConfig: async (restaurantId, questionFlow) => {
         try {
             const payload = {
@@ -141,6 +136,42 @@ export const settingsService = {
             return response.data;
         } catch (error) {
             const message = handleApiError(error, 'Failed to update bot configuration');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Add a new question to the bot configuration.
+     * POST /api/question/add
+     */
+    addQuestion: async (restaurantId, questionData) => {
+        try {
+            const payload = {
+                restaurantId: String(restaurantId),
+                question: questionData
+            };
+            const response = await apiClient.post(JARVIS_CONFIG_ENDPOINTS.ADD_QUESTION, payload);
+            return response.data;
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to add question');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Delete a question from the bot configuration.
+     * DELETE /api/question/delete
+     */
+    deleteQuestion: async (restaurantId, questionId) => {
+        try {
+            const payload = {
+                restaurantId: String(restaurantId),
+                questionId: questionId
+            };
+            const response = await apiClient.delete(JARVIS_CONFIG_ENDPOINTS.DELETE_QUESTION, { data: payload });
+            return response.data;
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to delete question');
             throw new Error(message);
         }
     },

@@ -8,7 +8,8 @@ import {
   Info,
   CheckCircle2,
   Save,
-  Loader2
+  Loader2,
+  Plus
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { settingsService } from '../services/settings';
@@ -30,21 +31,35 @@ export function BotSetting() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Add Question Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newQuestion, setNewQuestion] = useState({ title: '', botMessage: '', instructions: '', isRequired: true });
+  const [isAdding, setIsAdding] = useState(false);
+
+  const fetchBotSettings = () => {
+    if (!restaurantId) return;
+    setLoading(true);
+    settingsService.getBotConfig(restaurantId)
+      .then(data => {
+        if (data && data.questionFlow) {
+            setQuestions(data.questionFlow.sort((a,b) => a.order - b.order));
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  };
+
   useEffect(() => {
-    if (restaurantId) {
-      settingsService.getBotConfig(restaurantId)
-        .then(data => {
-          if (data && data.questionFlow) {
-              setQuestions(data.questionFlow.sort((a,b) => a.order - b.order));
-          }
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setLoading(false);
-        });
-    }
+    fetchBotSettings();
   }, [restaurantId]);
+
+  const sortedQuestions = [...questions].sort((a,b) => a.order - b.order);
+  const finalGreet = sortedQuestions.find(q => q.title === 'Greeting' || q.id === 'greet') || sortedQuestions[0];
+  const finalConfirm = sortedQuestions.find(q => q.title === 'Confirmation' || q.id === 'confirm') || (sortedQuestions.length > 1 ? sortedQuestions[sortedQuestions.length - 1] : null);
+  const middleQuestions = sortedQuestions.filter(q => q.id !== finalGreet?.id && q.id !== finalConfirm?.id);
 
   const handleDragStart = (e, index) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -60,18 +75,50 @@ export function BotSetting() {
     const sourceIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
     if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
 
-    const newFlow = [...questions];
-    const [moved] = newFlow.splice(sourceIndex, 1);
-    newFlow.splice(targetIndex, 0, moved);
+    const newMiddle = [...middleQuestions];
+    const [moved] = newMiddle.splice(sourceIndex, 1);
+    newMiddle.splice(targetIndex, 0, moved);
 
-    const updatedFlow = newFlow.map((q, idx) => ({ ...q, order: idx + 1 }));
-    setQuestions(updatedFlow);
+    const updatedFlow = [finalGreet, ...newMiddle, finalConfirm].filter(Boolean);
+    const normalizedFlow = updatedFlow.map((q, idx) => ({ ...q, order: idx + 1 }));
+    setQuestions(normalizedFlow);
   };
 
-  const handleUpdateMessage = (index, newMessage) => {
-    const newFlow = [...questions];
-    newFlow[index].botMessage = newMessage;
+  const handleUpdateMessage = (questionId, newMessage) => {
+    const newFlow = questions.map(q => 
+        q.id === questionId ? { ...q, botMessage: newMessage } : q
+    );
     setQuestions(newFlow);
+  };
+
+  const handleAddQuestion = async () => {
+    if (!newQuestion.title || !newQuestion.botMessage) {
+      alert('Please fill at least the title and message.');
+      return;
+    }
+    setIsAdding(true);
+    try {
+      await settingsService.addQuestion(restaurantId, newQuestion);
+      setIsAddModalOpen(false);
+      setNewQuestion({ title: '', botMessage: '', instructions: '', isRequired: true });
+      fetchBotSettings();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to add question');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId) => {
+    if (!window.confirm('Are you sure you want to delete this question?')) return;
+    try {
+      await settingsService.deleteQuestion(restaurantId, questionId);
+      fetchBotSettings();
+    } catch(err) {
+      console.error(err);
+      alert('Failed to delete question');
+    }
   };
 
   const saveConfig = async () => {
@@ -114,14 +161,21 @@ export function BotSetting() {
       <div className="border-t border-gray-200 mt-5 mb-6" />
 
       {/* ── Section label row ── */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-m font-semibold text-gray-700">Conversation Flow</h2>
-          <p className="text-xs text-gray-400 mt-0.5">
-            The sequence of questions your AI bot asks during a reservation call
-            <span className="block mt-1 text-blue-500 font-medium">Drag and drop the cards to reorder. Click the pencil icon to edit the text for each flow.</span>
+          <h2 className="text-lg font-semibold text-gray-700">Conversation Flow</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            Keep the opening, booking questions, and final confirmation clearly separated for easier management.
+            <span className="block mt-1 text-blue-500 font-medium">Greeting and confirmation are editable only. Middle questions can be edited and deleted.</span>
           </p>
         </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium flex items-center gap-1.5 cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          Add Question
+        </button>
       </div>
 
       {loading ? (
@@ -129,51 +183,173 @@ export function BotSetting() {
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ gridAutoRows: '1fr' }}>
-          {questions.map((q, index) => (
-            <QuestionRow
-              key={q.id || index}
-              question={q}
-              index={index}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onUpdateMessage={handleUpdateMessage}
-            />
-          ))}
+        <div className="space-y-10">
+          
+          {/* Greeting Section */}
+          {finalGreet && (
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Bot className="w-5 h-5 text-blue-500" />
+                <h3 className="text-md font-semibold text-gray-800">Greeting Message</h3>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">This stays fixed at the top so your bot always starts with a clean welcome.</p>
+              <div className="grid grid-cols-1 gap-4">
+                <QuestionRow
+                  question={finalGreet}
+                  isFixed={true}
+                  isFullScreen={true}
+                  onUpdateMessage={handleUpdateMessage}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-gray-200" />
+
+          {/* Middle Section */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-md font-semibold text-gray-800">Booking Questions</h3>
+              <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{middleQuestions.length} active</span>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Manage the reservation questions here. Any new question is added at the end of this section, just before confirmation.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ gridAutoRows: '1fr' }}>
+              {middleQuestions.map((q, index) => (
+                <QuestionRow
+                  key={q.id || index}
+                  question={q}
+                  index={index}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onUpdateMessage={handleUpdateMessage}
+                  onDelete={handleDeleteQuestion}
+                  isFixed={false}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200" />
+
+          {/* Confirmation Section */}
+          {finalConfirm && (
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Lock className="w-4 h-4 text-gray-500" />
+                <h3 className="text-md font-semibold text-gray-800">Confirmation Message</h3>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">This remains fixed at the end so every reservation closes with the final confirmation.</p>
+              <div className="grid grid-cols-1 gap-4">
+                <QuestionRow
+                  question={finalConfirm}
+                  isFixed={true}
+                  isFullScreen={true}
+                  onUpdateMessage={handleUpdateMessage}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* ── Footer ── */}
-      <div className="mt-6 flex items-center gap-2">
-        <CheckCircle2 className="w-3.5 h-3.5 text-gray-300" />
-        <p className="text-xs text-gray-400">
+      <div className="mt-8 flex items-center gap-2">
+        <CheckCircle2 className="w-4 h-4 text-gray-400" />
+        <p className="text-sm text-gray-500">
           All{' '}
-          <span className="font-medium text-gray-500">{questions.length} questions</span>{' '}
+          <span className="font-semibold text-gray-700">{questions.length} questions</span>{' '}
           are active in this flow.
         </p>
       </div>
+
+      {/* ADD QUESTION MODAL */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl border border-gray-100">
+            <h3 className="text-lg font-semibold mb-4">Add Booking Question</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input 
+                  type="text" 
+                  value={newQuestion.title}
+                  onChange={e => setNewQuestion({...newQuestion, title: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g. Dietary Requirements"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bot Message</label>
+                <textarea 
+                  value={newQuestion.botMessage}
+                  onChange={e => setNewQuestion({...newQuestion, botMessage: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md p-2 text-sm h-24 resize-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="What the bot should ask the user"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Instructions (Optional)</label>
+                <input 
+                  type="text" 
+                  value={newQuestion.instructions}
+                  onChange={e => setNewQuestion({...newQuestion, instructions: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Instructions for AI"
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="isRequired"
+                  checked={newQuestion.isRequired}
+                  onChange={e => setNewQuestion({...newQuestion, isRequired: e.target.checked})}
+                  className="rounded text-blue-500 focus:ring-blue-500"
+                />
+                <label htmlFor="isRequired" className="text-sm font-medium text-gray-700">Required Question</label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-8">
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-md transition-colors"
+                disabled={isAdding}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAddQuestion}
+                disabled={isAdding}
+                className="px-4 py-2 bg-foreground text-white rounded-md text-sm font-medium flex items-center gap-2 disabled:opacity-50 hover:bg-foreground/90 transition-colors"
+              >
+                {isAdding && <Loader2 className="w-4 h-4 animate-spin" />}
+                Add Question
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function QuestionRow({ question, index, onDragStart, onDragOver, onDrop, onUpdateMessage }) {
-  const label = STEP_LABELS[question.id] || question.id;
+function QuestionRow({ question, index, onDragStart, onDragOver, onDrop, onUpdateMessage, onDelete, isFixed, isFullScreen }) {
+  const label = question.title || STEP_LABELS[question.id] || question.id;
   const [isEditing, setIsEditing] = useState(false);
   const [tempMessage, setTempMessage] = useState(question.botMessage || '');
 
   const handleSaveEdit = () => {
     setIsEditing(false);
-    onUpdateMessage(index, tempMessage);
+    onUpdateMessage(question.id, tempMessage);
   };
 
   return (
     <div
-      draggable={!isEditing}
-      onDragStart={(e) => onDragStart(e, index)}
-      onDragOver={onDragOver}
-      onDrop={(e) => onDrop(e, index)}
-      className={`relative flex flex-col bg-white border border-gray-200 rounded-xl p-5 overflow-hidden min-h-[160px] transition-colors ${!isEditing ? 'cursor-move hover:border-blue-300' : 'border-blue-300 ring-2 ring-blue-50'}`}
+      draggable={!isEditing && !isFixed}
+      onDragStart={(e) => !isFixed && onDragStart && onDragStart(e, index)}
+      onDragOver={!isFixed ? onDragOver : undefined}
+      onDrop={(e) => !isFixed && onDrop && onDrop(e, index)}
+      className={`relative flex flex-col bg-white border border-gray-200 rounded-xl p-5 overflow-hidden min-h-[160px] transition-colors ${!isEditing && !isFixed ? 'cursor-move hover:border-blue-300' : isEditing ? 'border-blue-300 ring-2 ring-blue-50' : ''} ${isFullScreen ? 'col-span-1 md:col-span-2' : ''}`}
     >
       {/* Card header */}
       <div className="flex items-center justify-between gap-2 mb-3">
@@ -190,8 +366,16 @@ function QuestionRow({ question, index, onDragStart, onDragOver, onDrop, onUpdat
               Required
             </span>
           )}
+          {isFixed && (
+            <span className="text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 rounded px-2 py-0.5 flex items-center gap-1">
+              <Lock style={{ width: 10, height: 10 }} />
+              Fixed
+            </span>
+          )}
           <div className="flex items-center gap-1.5 opacity-60">
-            <GripVertical style={{ width: 18, height: 18 }} className="text-gray-500 hover:text-gray-800 cursor-grab" />
+            {!isFixed && (
+              <GripVertical style={{ width: 18, height: 18 }} className="text-gray-500 hover:text-gray-800 cursor-grab" />
+            )}
             <button
               onClick={() => isEditing ? handleSaveEdit() : setIsEditing(true)}
               className="hover:text-blue-500 transition-colors p-1 cursor-pointer"
@@ -201,6 +385,15 @@ function QuestionRow({ question, index, onDragStart, onDragOver, onDrop, onUpdat
                 ? <CheckCircle2 style={{ width: 16, height: 16 }} className="text-blue-500" />
                 : <Pencil style={{ width: 16, height: 16 }} className="text-gray-500 hover:text-gray-900" />}
             </button>
+            {!isFixed && onDelete && (
+              <button
+                onClick={() => onDelete(question.id)}
+                className="hover:text-red-500 transition-colors p-1 cursor-pointer"
+                title="Delete"
+              >
+                <Trash2 style={{ width: 16, height: 16 }} className="text-gray-500 hover:text-red-500" />
+              </button>
+            )}
           </div>
         </div>
       </div>
