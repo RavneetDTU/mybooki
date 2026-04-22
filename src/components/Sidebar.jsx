@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Users, Settings, BarChart3, Clock, Phone, CreditCard, Bot, PhoneOff } from 'lucide-react';
+import { Calendar, Users, Settings, BarChart3, Clock, Phone, CreditCard, Bot, PhoneOff, Code2, MessageCircle } from 'lucide-react';
 
 function Sidebar() {
     const location = useLocation();
@@ -12,6 +12,8 @@ function Sidebar() {
         { path: '/availability', label: 'Availability', icon: Clock },
         { path: '/settings', label: 'Settings', icon: Settings },
         { path: '/botsettings', label: 'Bot-Settings', icon: Bot },
+        { path: '/widget', label: 'Widget', icon: Code2 },
+        { path: '/widget-conversations', label: 'Widget Chats', icon: MessageCircle },
         { path: '/payments', label: 'Payments', icon: CreditCard },
         { path: '/set-number', label: 'Set Number', icon: Phone },
     ];
