@@ -169,13 +169,6 @@ export function BotSetting() {
             <span className="block mt-1 text-blue-500 font-medium">Greeting and confirmation are editable only. Middle questions can be edited and deleted.</span>
           </p>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium flex items-center gap-1.5 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Add Question
-        </button>
       </div>
 
       {loading ? (
@@ -210,7 +203,13 @@ export function BotSetting() {
           <div>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-md font-semibold text-gray-800">Booking Questions</h3>
-              <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{middleQuestions.length} active</span>
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Add Question
+              </button>
             </div>
             <p className="text-sm text-gray-500 mb-4">Manage the reservation questions here. Any new question is added at the end of this section, just before confirmation.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ gridAutoRows: '1fr' }}>
@@ -312,7 +311,7 @@ export function BotSetting() {
             <div className="flex justify-end gap-3 mt-8">
               <button 
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-md transition-colors cursor-pointer"
                 disabled={isAdding}
               >
                 Cancel
@@ -320,7 +319,7 @@ export function BotSetting() {
               <button 
                 onClick={handleAddQuestion}
                 disabled={isAdding}
-                className="px-4 py-2 bg-foreground text-white rounded-md text-sm font-medium flex items-center gap-2 disabled:opacity-50 hover:bg-foreground/90 transition-colors"
+                className="px-4 py-2 bg-foreground text-white rounded-md text-sm font-medium flex items-center gap-2 disabled:opacity-50 hover:bg-foreground/90 transition-colors cursor-pointer"
               >
                 {isAdding && <Loader2 className="w-4 h-4 animate-spin" />}
                 Add Question

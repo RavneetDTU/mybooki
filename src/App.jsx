@@ -19,6 +19,8 @@ import { Stats } from './pages/Stats';
 import { Payments } from './pages/Payments';
 import {BotSetting} from './pages/BotSetting';
 import FailedBookings from './pages/FailedBookings';
+import { Widget } from './pages/Widget';
+import WidgetConversations from './pages/WidgetConversations';
 
 
 
@@ -53,6 +55,8 @@ export default function App() {
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/payments" element={<Payments />} />
                   <Route path="/failed-bookings" element={<FailedBookings />} />
+                  <Route path="/widget" element={<Widget />} />
+                  <Route path="/widget-conversations" element={<WidgetConversations />} />
 
                   {/* Fallback: If path is unknown, go to Reservations */}
                   {/* <Route path="*" element={<Navigate to="/reservations" replace />} /> */}
