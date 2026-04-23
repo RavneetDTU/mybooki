@@ -69,8 +69,8 @@ function ConversationModal({ isOpen, onClose, session }) {
 
           {/* Status */}
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-medium text-gray-700 capitalize">{session.status || 'completed'}</span>
+            {/* <CheckCircle2 className="w-4 h-4 text-green-500" />
+            <span className="text-sm font-medium text-gray-700 capitalize">{session.status || 'completed'}</span> */}
             <span className="text-xs text-muted-foreground ml-2">Session ID: {session.sessionId}</span>
           </div>
 
@@ -225,10 +225,10 @@ export default function WidgetConversations() {
                     </div>
 
                     {/* Status badge */}
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-md border border-green-200">
+                    {/* <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-md border border-green-200">
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
                       <span className="text-green-700 text-xs font-medium capitalize">{session.status || 'completed'}</span>
-                    </div>
+                    </div> */}
 
                     {/* Phone badge */}
                     {!isMissing(phone) ? (
