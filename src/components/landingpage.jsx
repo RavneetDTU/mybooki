@@ -182,7 +182,7 @@ export default function LandingPage() {
                         <div className="w-fit flex items-center gap-4 md:gap-6">
                             {/* ── Jarvis inline widget ── */}
                             <iframe
-                                src="https://openai-widgets-ten.vercel.app/embed/inline"
+                                src="https://widget.jarviscalling.ai/embed/inline"
                                 allow="microphone; screen-wake-lock"
                                 title="Jarvis AI Demo"
                                 id="jarvis-inline-frame"
