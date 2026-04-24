@@ -6,7 +6,7 @@ function Sidebar() {
 
     const navItems = [
         { path: '/reservations', label: 'Reservations', icon: Calendar },
-        { path: '/failed-bookings', label: 'Failed Bookings', icon: PhoneOff },
+        { path: '/failed-bookings', label: 'Other Bookings', icon: PhoneOff },
         { path: '/stats', label: 'Stats', icon: BarChart3 },
         { path: '/guests', label: 'Guests', icon: Users },
         { path: '/availability', label: 'Availability', icon: Clock },

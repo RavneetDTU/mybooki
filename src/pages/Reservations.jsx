@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Phone, Users, Calendar, X, Clock, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Users, User, Calendar, X, Clock, Plus } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { reservationService } from '../services/reservations';
 import { formatTime12Hour } from '../utils/dateUtils';
@@ -281,7 +281,7 @@ export function Reservations() {
 
                                             {/* Guest Count */}
                                             <div className="flex items-center gap-1.5 px-3 py-1 bg-muted rounded-md">
-                                                <Phone className="w-3.5 h-3.5 text-foreground" />
+                                                <User className="w-3.5 h-3.5 text-foreground" />
                                                 <span className="text-foreground">
                                                     {bookingsWithNames[0].guests}
                                                 </span>
@@ -347,7 +347,7 @@ export function Reservations() {
 
                                                     {/* Guest Count */}
                                                     <div className="flex items-center gap-1.5 px-3 py-1 bg-muted rounded-md">
-                                                        <Phone className="w-3.5 h-3.5 text-foreground" />
+                                                        <User className="w-3.5 h-3.5 text-foreground" />
                                                         <span className="text-foreground">
                                                             {reservation.guests}
                                                         </span>
