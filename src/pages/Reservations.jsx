@@ -271,12 +271,21 @@ export function Reservations() {
                                             </div>
 
                                             {/* Payment Status Badge */}
-                                            <div className={`flex items-center px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md border ${
-                                                bookingsWithNames[0].paymentStatus === 'Payment Success' 
-                                                    ? 'bg-blue-50 text-blue-700 border-blue-200/50' 
-                                                    : 'bg-orange-50 text-orange-700 border-orange-200/50'
+                                            <div className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md border ${
+                                                bookingsWithNames[0].paymentStatus === 'Refund Completed'
+                                                    ? 'bg-teal-50 text-teal-700 border-teal-200'
+                                                    : bookingsWithNames[0].paymentStatus === 'Payment Success'
+                                                        ? 'bg-blue-50 text-blue-700 border-blue-200/50'
+                                                        : 'bg-orange-50 text-orange-700 border-orange-200/50'
                                             }`}>
-                                                {bookingsWithNames[0].paymentStatus === 'Payment Success' ? 'Payment Success' : 'Payment Pending'}
+                                                {bookingsWithNames[0].paymentStatus === 'Refund Completed' && (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                                )}
+                                                {bookingsWithNames[0].paymentStatus === 'Refund Completed'
+                                                    ? 'Refunded'
+                                                    : bookingsWithNames[0].paymentStatus === 'Payment Success'
+                                                        ? 'Payment Success'
+                                                        : 'Payment Pending'}
                                             </div>
 
                                             {/* Guest Count */}
@@ -337,12 +346,21 @@ export function Reservations() {
                                                     </div>
 
                                                     {/* Payment Status Badge */}
-                                                    <div className={`flex items-center px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md border ${
-                                                        reservation.paymentStatus === 'Payment Success' 
-                                                            ? 'bg-blue-50 text-blue-700 border-blue-200/50' 
-                                                            : 'bg-orange-50 text-orange-700 border-orange-200/50'
+                                                    <div className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md border ${
+                                                        reservation.paymentStatus === 'Refund Completed'
+                                                            ? 'bg-teal-50 text-teal-700 border-teal-200'
+                                                            : reservation.paymentStatus === 'Payment Success'
+                                                                ? 'bg-blue-50 text-blue-700 border-blue-200/50'
+                                                                : 'bg-orange-50 text-orange-700 border-orange-200/50'
                                                     }`}>
-                                                        {reservation.paymentStatus === 'Payment Success' ? 'Payment Success' : 'Payment Pending'}
+                                                        {reservation.paymentStatus === 'Refund Completed' && (
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                                        )}
+                                                        {reservation.paymentStatus === 'Refund Completed'
+                                                            ? 'Refunded'
+                                                            : reservation.paymentStatus === 'Payment Success'
+                                                                ? 'Payment Success'
+                                                                : 'Payment Pending'}
                                                     </div>
 
                                                     {/* Guest Count */}

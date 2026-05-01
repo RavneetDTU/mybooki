@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CreditCard, Users, Calendar, Clock, Phone, ChevronDown, ChevronUp, X, DollarSign, Hash, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { CreditCard, Users, Calendar, Clock, Phone, ChevronDown, ChevronUp, X, DollarSign, Hash, CheckCircle, AlertCircle, RefreshCw, RotateCcw } from 'lucide-react';
 import { paymentService } from '../services/payments';
 import { useAuthStore } from '../store/useAuthStore';
+import { RefundModal } from '../components/RefundModal';
 
 /**
  * Format Firestore-style timestamp ({ _seconds, _nanoseconds }) into a readable string.
@@ -46,7 +47,11 @@ const formatCurrency = (amount) => {
  */
 const formatTime = (time) => {
     if (!time) return '—';
+    // If the API already returns a 12h formatted time (e.g. "01:00 PM"), pass it through as-is
+    if (/am|pm/i.test(time)) return time;
+    // Otherwise convert from 24h format
     const [h, m] = time.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return time;
     const suffix = h >= 12 ? 'PM' : 'AM';
     const hour12 = h % 12 || 12;
     return `${hour12}:${String(m).padStart(2, '0')} ${suffix}`;
@@ -61,6 +66,20 @@ export const Payments = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [expandedRow, setExpandedRow] = useState(null);
+    const [refundTarget, setRefundTarget] = useState(null);
+    const [showRefundModal, setShowRefundModal] = useState(false);
+
+    const openRefundModal = (e, payment) => {
+        e.stopPropagation();
+        console.log('[Payments] Opening refund modal for payment:', payment.paymentId, '| gatewayTransactionId:', payment.gatewayTransactionId);
+        setRefundTarget(payment);
+        setShowRefundModal(true);
+    };
+
+    const closeRefundModal = () => {
+        setShowRefundModal(false);
+        setRefundTarget(null);
+    };
 
     const fetchPayments = useCallback(async () => {
         if (!restaurantId) return;
@@ -197,6 +216,7 @@ export const Payments = () => {
                                     <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Paid At</th>
+                                    <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                     <th className="text-center px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider"></th>
                                 </tr>
                             </thead>
@@ -247,7 +267,15 @@ export const Payments = () => {
 
                                             {/* Status */}
                                             <td className="px-4 py-3 text-center">
-                                                {payment.status === 'success' ? (
+                                                {payment.refundStatus ? (
+                                                    <div className="flex flex-col items-center gap-0.5">
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-200">
+                                                            <RotateCcw className="w-3 h-3" />
+                                                            {payment.refundStatus.charAt(0).toUpperCase() + payment.refundStatus.slice(1)}
+                                                        </span>
+                                                        <span className="text-xs text-blue-500 font-medium">{formatCurrency(payment.refundedAmount)}</span>
+                                                    </div>
+                                                ) : payment.status === 'success' ? (
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full border border-emerald-200">
                                                         <CheckCircle className="w-3 h-3" />
                                                         Success
@@ -263,6 +291,34 @@ export const Payments = () => {
                                             {/* Paid At */}
                                             <td className="px-4 py-3 text-center">
                                                 <span className="text-xs text-muted-foreground">{formatTimestamp(payment.paidAt)}</span>
+                                            </td>
+
+                                            {/* Process Refund Action */}
+                                            <td className="px-4 py-3 text-center">
+                                                {payment.gatewayTransactionId ? (
+                                                    payment.refundStatus ? (
+                                                        // Already refunded — show disabled chip
+                                                        <span
+                                                            title="This payment has already been refunded"
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-blue-200 bg-blue-50 text-blue-400 whitespace-nowrap cursor-not-allowed select-none opacity-70"
+                                                        >
+                                                            <RotateCcw className="w-3 h-3" />
+                                                            Refunded
+                                                        </span>
+                                                    ) : (
+                                                        // Not yet refunded — active button
+                                                        <button
+                                                            onClick={(e) => openRefundModal(e, payment)}
+                                                            title="Process Refund"
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-400 transition-all cursor-pointer whitespace-nowrap"
+                                                        >
+                                                            <RotateCcw className="w-3 h-3" />
+                                                            Refund
+                                                        </button>
+                                                    )
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground/40">—</span>
+                                                )}
                                             </td>
 
                                             {/* Expand Toggle */}
@@ -288,22 +344,60 @@ export const Payments = () => {
                                         {expandedRow === payment.paymentId && (
                                             <tr key={`${payment.paymentId}-details`} className="bg-muted/10">
                                                 <td colSpan={10} className="px-6 py-4">
-                                                    <div className="flex items-start gap-8 text-sm">
-                                                        {/* Payment ID */}
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground mb-0.5 font-medium">Payment ID</p>
-                                                            <p className="text-foreground font-mono text-xs bg-muted px-2 py-1 rounded">{payment.paymentId}</p>
+                                                    <div className="flex flex-col gap-4">
+                                                        {/* Core IDs */}
+                                                        <div className="flex items-start gap-8 text-sm flex-wrap">
+                                                            {/* Payment ID */}
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-0.5 font-medium">Payment ID</p>
+                                                                <p className="text-foreground font-mono text-xs bg-muted px-2 py-1 rounded">{payment.paymentId}</p>
+                                                            </div>
+                                                            {/* Call SID */}
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-0.5 font-medium">Call SID</p>
+                                                                <p className="text-foreground font-mono text-xs bg-muted px-2 py-1 rounded">{payment.callSid}</p>
+                                                            </div>
+                                                            {/* Gateway Transaction ID */}
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground mb-0.5 font-medium">Gateway Transaction ID</p>
+                                                                <p className="text-foreground font-mono text-xs bg-muted px-2 py-1 rounded">{payment.gatewayTransactionId}</p>
+                                                            </div>
                                                         </div>
-                                                        {/* Call SID */}
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground mb-0.5 font-medium">Call SID</p>
-                                                            <p className="text-foreground font-mono text-xs bg-muted px-2 py-1 rounded">{payment.callSid}</p>
-                                                        </div>
-                                                        {/* Gateway Transaction ID */}
-                                                        <div>
-                                                            <p className="text-xs text-muted-foreground mb-0.5 font-medium">Gateway Transaction ID</p>
-                                                            <p className="text-foreground font-mono text-xs bg-muted px-2 py-1 rounded">{payment.gatewayTransactionId}</p>
-                                                        </div>
+
+                                                        {/* Refund Details — only shown when refund data exists */}
+                                                        {payment.refundStatus && (
+                                                            <div className="border-t border-blue-100 pt-3">
+                                                                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                                                    <RotateCcw className="w-3 h-3" />
+                                                                    Refund Details
+                                                                </p>
+                                                                <div className="flex items-start gap-8 flex-wrap">
+                                                                    {/* Refund Status */}
+                                                                    <div>
+                                                                        <p className="text-xs text-muted-foreground mb-0.5 font-medium">Refund Status</p>
+                                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded border border-blue-200">
+                                                                            {payment.refundStatus.charAt(0).toUpperCase() + payment.refundStatus.slice(1)}
+                                                                        </span>
+                                                                    </div>
+                                                                    {/* Refunded Amount */}
+                                                                    <div>
+                                                                        <p className="text-xs text-muted-foreground mb-0.5 font-medium">Refunded Amount</p>
+                                                                        <p className="text-sm font-semibold text-blue-700">{formatCurrency(payment.refundedAmount)}</p>
+                                                                    </div>
+                                                                    {/* Refund ID(s) */}
+                                                                    {payment.refundIds?.length > 0 && (
+                                                                        <div>
+                                                                            <p className="text-xs text-muted-foreground mb-1 font-medium">Refund ID{payment.refundIds.length > 1 ? 's' : ''}</p>
+                                                                            <div className="flex flex-col gap-1">
+                                                                                {payment.refundIds.map((rid) => (
+                                                                                    <p key={rid} className="text-foreground font-mono text-xs bg-blue-50 border border-blue-100 px-2 py-1 rounded">{rid}</p>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -315,6 +409,18 @@ export const Payments = () => {
                     </div>
                 )}
             </div>
+
+            {/* Refund Modal */}
+            {showRefundModal && refundTarget && (
+                <RefundModal
+                    payment={refundTarget}
+                    onClose={closeRefundModal}
+                    onRefundSuccess={() => {
+                        console.log('[Payments] Refund succeeded — refreshing payment list');
+                        fetchPayments();
+                    }}
+                />
+            )}
         </div>
     );
 };

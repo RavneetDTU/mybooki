@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, MessageSquare } from 'lucide-react';
+import { X, MessageSquare, RotateCcw, FileText } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import apiClient from '../services/api/axios';
 import { TRANSCRIPTION_ENDPOINTS } from '../services/api/endpoints';
@@ -88,13 +88,20 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                                 >
                                     {display(reservation.status)}
                                 </span>
-                                <span className={`px-2.5 py-1 text-xs font-medium rounded ${
-                                    reservation.paymentStatus === 'Payment Success' 
-                                        ? 'bg-blue-100 text-blue-700' 
-                                        : 'bg-orange-100 text-orange-700'
-                                }`}>
-                                    {reservation.paymentStatus === 'Payment Success' ? 'Payment Success' : 'Payment Pending'}
-                                </span>
+                                {reservation.paymentStatus === 'Refund Completed' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-teal-50 text-teal-700 border border-teal-200">
+                                        <RotateCcw className="w-3 h-3" />
+                                        Refund Completed
+                                    </span>
+                                ) : reservation.paymentStatus === 'Payment Success' ? (
+                                    <span className="px-2.5 py-1 text-xs font-medium rounded bg-blue-100 text-blue-700">
+                                        Payment Success
+                                    </span>
+                                ) : (
+                                    <span className="px-2.5 py-1 text-xs font-medium rounded bg-orange-100 text-orange-700">
+                                        Payment Pending
+                                    </span>
+                                )}
                             </div>
                             <div className="text-right text-xs text-muted-foreground">
                                 <p className="font-medium text-foreground">
@@ -175,6 +182,24 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Refund / Payment Notes */}
+                            {reservation?.paymentNotes && (
+                                <div
+                                    className="flex items-start gap-3 rounded-lg px-4 py-3 border"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #f0fdfa 0%, #f7fffe 100%)',
+                                        borderColor: '#14b8a6',
+                                        borderLeft: '4px solid #14b8a6',
+                                    }}
+                                >
+                                    <FileText className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs font-semibold text-teal-700 uppercase tracking-wide mb-1">Payment Note</p>
+                                        <p className="text-sm text-teal-900 leading-relaxed">{reservation.paymentNotes}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
