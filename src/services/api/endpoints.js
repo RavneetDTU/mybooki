@@ -56,6 +56,12 @@ export const PAYMENT_ENDPOINTS = {
     GET_BY_RESTAURANT: (restaurantId) => `${JARVIS_BASE_URL}/api/payfast/payments/${restaurantId}`,
 };
 
+// Refund Endpoints
+export const REFUND_ENDPOINTS = {
+    QUERY:    (gatewayTransactionId) => `${JARVIS_BASE_URL}/api/refund/query/${gatewayTransactionId}`,
+    INITIATE: `${JARVIS_BASE_URL}/api/refund/initiate`,
+};
+
 // Jarvis Config Endpoints
 export const JARVIS_CONFIG_ENDPOINTS = {
     GET_DETAILS: (restaurantId) => `${JARVIS_BASE_URL}/api/restaurant/${restaurantId}/details`,
