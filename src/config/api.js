@@ -4,7 +4,7 @@
  */
 
 // Base URL for all API requests
-export const API_BASE_URL = 'https://mybookiapis.jarviscalling.ai';
+export const API_BASE_URL = 'https://mybookiapis.booki.co.za';
 
 // API timeout in milliseconds
 export const API_TIMEOUT = 30000; // 30 seconds

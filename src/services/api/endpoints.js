@@ -49,7 +49,7 @@ export const AUTH_ENDPOINTS = {
 // Jarvis Base URL configuration: Automatically switches between localhost for development and live for production
 const JARVIS_BASE_URL = import.meta.env.MODE === 'development' 
     ? 'http://localhost:9000' 
-    : 'https://phone.jarviscalling.ai';
+    : 'https://phone.booki.co.za';
 
 // Payment Endpoints
 export const PAYMENT_ENDPOINTS = {
