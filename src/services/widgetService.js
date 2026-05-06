@@ -9,7 +9,7 @@ import axios from 'axios';
 const WIDGET_BASE_URL =
     import.meta.env.MODE === 'development'
         ? 'http://localhost:3000'
-        : (import.meta.env.VITE_WIDGET_API_URL || 'https://widget.jarviscalling.ai');
+        : (import.meta.env.VITE_WIDGET_API_URL || 'https://widget.booki.co.za');
 
 const widgetClient = axios.create({
     baseURL: WIDGET_BASE_URL,
