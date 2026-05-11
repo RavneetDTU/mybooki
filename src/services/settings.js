@@ -82,8 +82,8 @@ export const settingsService = {
             const data = response.data;
             console.log('[Settings] Jarvis config response:', data);
 
-            // API returns: { name: "...", depositAmount: 500, currency: "rand" }
-            return data.settings.depositAmount || '';
+            // API returns full restaurant config; deposit lives under settings (same as RestaurantEmail)
+            return data.settings?.depositAmount ?? '';
         } catch (error) {
             const message = handleApiError(error, 'Failed to fetch deposit amount');
             throw new Error(message);
@@ -108,6 +108,44 @@ export const settingsService = {
             return response.data;
         } catch (error) {
             const message = handleApiError(error, 'Failed to update deposit amount');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Get restaurant notification email from Jarvis config (settings.RestaurantEmail).
+     * Same source as deposit: GET /api/restaurant/:id/details
+     */
+    getRestaurantEmail: async (restaurantId) => {
+        try {
+            const response = await apiClient.get(JARVIS_CONFIG_ENDPOINTS.GET_DETAILS(restaurantId));
+            const data = response.data;
+            const v = data.settings?.RestaurantEmail;
+            return typeof v === 'string' ? v : '';
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to fetch restaurant email');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Update restaurant notification email in Jarvis config.
+     * Same pattern as updateDepositAmount: POST /api/update-config with settings merge.
+     */
+    updateRestaurantEmail: async (restaurantId, email) => {
+        try {
+            const payload = {
+                restaurantId: String(restaurantId),
+                settings: {
+                    RestaurantEmail: String(email ?? '').trim(),
+                },
+            };
+            console.log('[Settings] Updating restaurant email:', payload);
+            const response = await apiClient.post(JARVIS_CONFIG_ENDPOINTS.UPDATE, payload);
+            console.log('[Settings] Restaurant email update response:', response.data);
+            return response.data;
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to update restaurant email');
             throw new Error(message);
         }
     },

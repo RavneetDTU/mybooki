@@ -1,4 +1,4 @@
-import { MapPin, Mail, Lock, Save, Loader, DollarSign } from 'lucide-react';
+import { MapPin, Mail, Lock, Save, Loader } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { settingsService } from '../services/settings';
 import { useAuthStore } from '../store/useAuthStore';
@@ -9,6 +9,8 @@ export function Settings() {
     const [addressSaving, setAddressSaving] = useState(false);
     const [passwordSaving, setPasswordSaving] = useState(false);
     const [email, setEmail] = useState('');
+    const [emailLoading, setEmailLoading] = useState(true);
+    const [emailSaving, setEmailSaving] = useState(false);
     const [depositAmount, setDepositAmount] = useState('');
     const [depositLoading, setDepositLoading] = useState(true);
     const [depositSaving, setDepositSaving] = useState(false);
@@ -58,10 +60,26 @@ export function Settings() {
         }
     }, [restaurantId]);
 
+    const loadRestaurantEmail = useCallback(async () => {
+        if (!restaurantId) return;
+        setEmailLoading(true);
+        try {
+            const value = await settingsService.getRestaurantEmail(restaurantId);
+            if (value !== undefined && value !== null) {
+                setEmail(value);
+            }
+        } catch (error) {
+            console.error('[Settings] Failed to load restaurant email:', error);
+        } finally {
+            setEmailLoading(false);
+        }
+    }, [restaurantId]);
+
     useEffect(() => {
         loadAddress();
         loadDepositAmount();
-    }, [loadAddress, loadDepositAmount]);
+        loadRestaurantEmail();
+    }, [loadAddress, loadDepositAmount, loadRestaurantEmail]);
 
     const handleSaveAddress = async () => {
         setAddressSaving(true);
@@ -86,6 +104,19 @@ export function Settings() {
             alert('Failed to update deposit amount');
         } finally {
             setDepositSaving(false);
+        }
+    };
+
+    const handleSaveEmail = async () => {
+        setEmailSaving(true);
+        try {
+            await settingsService.updateRestaurantEmail(restaurantId, email);
+            alert('Email updated successfully!');
+        } catch (error) {
+            console.error('[Settings] Failed to save restaurant email:', error);
+            alert('Failed to update email');
+        } finally {
+            setEmailSaving(false);
         }
     };
 
@@ -229,29 +260,39 @@ export function Settings() {
                     </div>
 
                     <div className="p-5">
-                        <div>
-                            <label className="block text-xs font-medium text-foreground mb-1.5">
-                                Email Address
-                            </label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
-                                placeholder="restaurant@example.com"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1.5">
-                                This email will be used for reservation confirmations and customer communications
-                            </p>
-                        </div>
+                        {emailLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader className="w-5 h-5 animate-spin text-muted-foreground" />
+                                <span className="ml-2 text-sm text-muted-foreground">Loading email…</span>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1.5">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                    placeholder="restaurant@example.com"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1.5">
+                                    This email will be used for reservation confirmations and customer communications
+                                </p>
+                            </div>
+                        )}
 
                         <div className="flex justify-end mt-4 pt-4 border-t border-border">
                             <button
-                                onClick={() => alert('Email update coming soon')}
-                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer"
+                                onClick={handleSaveEmail}
+                                disabled={emailLoading || emailSaving}
+                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Save className="w-4 h-4" />
-                                Save Email
+                                {emailSaving
+                                    ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
+                                    : <><Save className="w-4 h-4" /> Save Email</>
+                                }
                             </button>
                         </div>
                     </div>
