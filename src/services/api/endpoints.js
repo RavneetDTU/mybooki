@@ -18,6 +18,11 @@ export const FAILED_BOOKINGS_ENDPOINTS = {
     GET_BY_DATE: (restaurantId) => `/restaurants/${restaurantId}/failed-bookings`,
 };
 
+// Other Messages Endpoints
+export const OTHER_MESSAGES_ENDPOINTS = {
+    GET_BY_DATE: (restaurantId) => `/restaurants/${restaurantId}/other-messages`,
+};
+
 // Guest Endpoints
 export const GUEST_ENDPOINTS = {
     GET_ALL: (restaurantId) => `/restaurants/${restaurantId}/guests`,

@@ -54,7 +54,7 @@ export default function App() {
                   <Route path="/set-number" element={<SetNumber />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/payments" element={<Payments />} />
-                  <Route path="/failed-bookings" element={<FailedBookings />} />
+                  <Route path="/other-calls" element={<FailedBookings />} />
                   <Route path="/widget" element={<Widget />} />
                   <Route path="/widget-conversations" element={<WidgetConversations />} />
 
