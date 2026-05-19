@@ -74,3 +74,4 @@ export const JARVIS_CONFIG_ENDPOINTS = {
     ADD_QUESTION: `${JARVIS_BASE_URL}/api/question/add`,
     DELETE_QUESTION: `${JARVIS_BASE_URL}/api/question/delete`,
 };
+
