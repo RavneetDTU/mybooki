@@ -2,6 +2,7 @@ import { MapPin, Mail, Lock, Save, Loader } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { settingsService } from '../services/settings';
 import { useAuthStore } from '../store/useAuthStore';
+import { CapacitySection } from '../components/CapacitySection';
 
 export function Settings() {
     const { restaurantId } = useAuthStore();
@@ -14,6 +15,7 @@ export function Settings() {
     const [depositAmount, setDepositAmount] = useState('');
     const [depositLoading, setDepositLoading] = useState(true);
     const [depositSaving, setDepositSaving] = useState(false);
+
 
     // Restaurant Address State
     const [address, setAddress] = useState({
@@ -362,7 +364,9 @@ export function Settings() {
                     </div>
                 </div>
 
+
                 {/* 4. Change Password Section */}
+
                 <div className="bg-white border border-border rounded-lg overflow-hidden">
                     <div className="bg-muted/30 border-b border-border px-5 py-3">
                         <div className="flex items-center gap-2">
@@ -434,6 +438,9 @@ export function Settings() {
                         </div>
                     </div>
                 </div>
+
+                {/* 5. Capacity Management */}
+                <CapacitySection />
 
             </div>
         </div>
