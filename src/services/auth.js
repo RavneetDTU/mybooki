@@ -132,7 +132,7 @@ export const authService = {
 
         console.log('[Auth] Submitting registration for:', formData.email);
 
-        const response = await fetch('https://register.jarviscalling.ai/api/register', {
+        const response = await fetch('https://register.booki.co.za/api/register', {
             method: 'POST',
             body, // fetch sets Content-Type: multipart/form-data automatically
         });
