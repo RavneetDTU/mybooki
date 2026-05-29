@@ -37,6 +37,14 @@ const MOCK_USERS = [
         role: 'owner',
         restaurantId: '4',
     },
+    {
+        email: 'reservations@lapetitemaisonrestaurant.co.za',
+        password: 'qsdcwe@@!$',
+        name: 'La Retha',
+        role: 'owner',
+        restaurantId: '5',
+    },
+
 ];
 
 /**
