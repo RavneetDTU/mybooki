@@ -75,3 +75,7 @@ export const JARVIS_CONFIG_ENDPOINTS = {
     DELETE_QUESTION: `${JARVIS_BASE_URL}/api/question/delete`,
 };
 
+// Restaurant Endpoints (Admin)
+export const RESTAURANT_ENDPOINTS = {
+    CREATE: `${JARVIS_BASE_URL}/api/restaurant/create`,
+};

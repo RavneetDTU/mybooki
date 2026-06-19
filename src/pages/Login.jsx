@@ -22,8 +22,12 @@ export default function Login() {
         setLocalError(null);
 
         try {
-            await login(formData);
-            navigate('/reservations');
+            const response = await login(formData);
+            if (response?.user?.role === 'admin') {
+                navigate('/admin/onboard');
+            } else {
+                navigate('/reservations');
+            }
         } catch (err) {
             console.error('Login Failed:', err);
             // Error is handled in store, but we can catch here if specific UI logic needed

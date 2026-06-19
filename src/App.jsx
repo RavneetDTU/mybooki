@@ -8,6 +8,7 @@ import RegistrationPending from './pages/RegistrationPending';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './components/landingpage/privacy-policy';
 import TermsAndConditions from './components/landingpage/terms-of-service';
+import OnboardRestaurant from './pages/OnboardRestaurant';
 
 // DinePlan Pages
 import { Reservations } from './pages/Reservations';
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/registration-pending" element={<RegistrationPending />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsAndConditions />} />
+        <Route path="/admin/onboard" element={<OnboardRestaurant />} />
 
         {/* --- Main App Layout (Sidebar + Content) --- */}
         {/* This catches all other paths (*) and renders the Sidebar layout */}
