@@ -10,6 +10,13 @@
 
 const MOCK_USERS = [
     {
+        email: 'admin@gmail.com',
+        password: 'admin@123',
+        name: 'Admin',
+        role: 'admin',
+        restaurantId: 'admin',
+    },
+    {
         email: 'billy@gmail.com',
         password: 'billy@123',
         name: 'Billy',
