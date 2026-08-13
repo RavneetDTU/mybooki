@@ -141,7 +141,7 @@ export const reservationService = {
      */
     createManualReservation: async (reservationData, restaurantId) => {
         try {
-            const API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:9000';
+            const API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:5014';
             const endpoint = `${API_URL}/api/booking/manual/${restaurantId}`;
             const response = await apiClient.post(endpoint, reservationData);
             return response.data; 

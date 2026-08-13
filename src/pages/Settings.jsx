@@ -1,8 +1,8 @@
-import { MapPin, Mail, Lock, Save, Loader } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { CreditCard, Eye, EyeOff, Loader, Lock, Mail, MapPin, Save, ShieldCheck } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { CapacitySection } from '../components/CapacitySection';
 import { settingsService } from '../services/settings';
 import { useAuthStore } from '../store/useAuthStore';
-import { CapacitySection } from '../components/CapacitySection';
 
 export function Settings() {
     const { restaurantId } = useAuthStore();
@@ -15,6 +15,16 @@ export function Settings() {
     const [depositAmount, setDepositAmount] = useState('');
     const [depositLoading, setDepositLoading] = useState(true);
     const [depositSaving, setDepositSaving] = useState(false);
+
+    // PayFast / Bank Details State
+    const [payfastLoading, setPayfastLoading] = useState(true);
+    const [payfastSaving, setPayfastSaving] = useState(false);
+    const [showPassphrase, setShowPassphrase] = useState(false);
+    const [payfastDetails, setPayfastDetails] = useState({
+        payfastMerchantId:  '',
+        payfastMerchantKey: '',
+        payfastPassphrase:  '',
+    });
 
 
     // Restaurant Address State
@@ -77,11 +87,26 @@ export function Settings() {
         }
     }, [restaurantId]);
 
+    // Load PayFast / Bank Details from Jarvis config
+    const loadPayfastDetails = useCallback(async () => {
+        if (!restaurantId) return;
+        setPayfastLoading(true);
+        try {
+            const data = await settingsService.getPayfastDetails(restaurantId);
+            setPayfastDetails(data);
+        } catch (error) {
+            console.error('[Settings] Failed to load PayFast details:', error);
+        } finally {
+            setPayfastLoading(false);
+        }
+    }, [restaurantId]);
+
     useEffect(() => {
         loadAddress();
         loadDepositAmount();
         loadRestaurantEmail();
-    }, [loadAddress, loadDepositAmount, loadRestaurantEmail]);
+        loadPayfastDetails();
+    }, [loadAddress, loadDepositAmount, loadRestaurantEmail, loadPayfastDetails]);
 
     const handleSaveAddress = async () => {
         setAddressSaving(true);
@@ -119,6 +144,28 @@ export function Settings() {
             alert('Failed to update email');
         } finally {
             setEmailSaving(false);
+        }
+    };
+
+
+    const handleSavePayfastDetails = async () => {
+        if (!payfastDetails.payfastMerchantId.trim()) {
+            alert('Merchant ID is required.');
+            return;
+        }
+        if (!payfastDetails.payfastMerchantKey.trim()) {
+            alert('Merchant Key is required.');
+            return;
+        }
+        setPayfastSaving(true);
+        try {
+            await settingsService.updatePayfastDetails(restaurantId, payfastDetails);
+            alert('Payment details saved successfully!');
+        } catch (error) {
+            console.error('[Settings] Failed to save PayFast details:', error);
+            alert('Failed to save payment details. Please try again.');
+        } finally {
+            setPayfastSaving(false);
         }
     };
 
@@ -439,7 +486,126 @@ export function Settings() {
                     </div>
                 </div>
 
-                {/* 5. Capacity Management */}
+                {/* 5. Bank Details (PayFast) Section */}
+                <div className="bg-white border border-border rounded-lg overflow-hidden">
+                    <div className="bg-muted/30 border-b border-border px-5 py-3">
+                        <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-foreground" />
+                            <h2 className="font-heading font-semibold text-foreground">
+                                Bank Details (PayFast)
+                            </h2>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Connect your PayFast account to receive deposit payments directly
+                        </p>
+                    </div>
+
+                    <div className="p-5">
+                        {payfastLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader className="w-5 h-5 animate-spin text-muted-foreground" />
+                                <span className="ml-2 text-sm text-muted-foreground">Loading payment details…</span>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+
+                                {/* Split Info Banner */}
+                                <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-semibold text-emerald-900">Automatic Split Payment Active</p>
+                                        <p className="text-xs text-emerald-700 mt-0.5">
+                                            <strong>80%</strong> of each deposit goes directly to your PayFast account.
+                                            Booki retains a <strong>20%</strong> platform fee. Funds are split instantly at the time of payment — no manual transfers needed.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Merchant ID */}
+                                <div>
+                                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                                        Merchant ID <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={payfastDetails.payfastMerchantId}
+                                        onChange={(e) => setPayfastDetails({ ...payfastDetails, payfastMerchantId: e.target.value })}
+                                        className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all font-mono"
+                                        placeholder="10000105"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">Found in your PayFast dashboard under Account &gt; Settings</p>
+                                </div>
+
+                                {/* Merchant Key */}
+                                <div>
+                                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                                        Merchant Key <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={payfastDetails.payfastMerchantKey}
+                                        onChange={(e) => setPayfastDetails({ ...payfastDetails, payfastMerchantKey: e.target.value })}
+                                        className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all font-mono"
+                                        placeholder="q1cd2rdny4a53"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">Your unique merchant key from the PayFast dashboard</p>
+                                </div>
+
+                                {/* Passphrase */}
+                                <div>
+                                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                                        Passphrase <span className="text-muted-foreground font-normal">(optional)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showPassphrase ? 'text' : 'password'}
+                                            value={payfastDetails.payfastPassphrase}
+                                            onChange={(e) => setPayfastDetails({ ...payfastDetails, payfastPassphrase: e.target.value })}
+                                            className="w-full px-3 py-2 pr-10 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all font-mono"
+                                            placeholder="Set in PayFast dashboard under Settings"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassphrase(!showPassphrase)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {showPassphrase
+                                                ? <EyeOff className="w-4 h-4" />
+                                                : <Eye className="w-4 h-4" />
+                                            }
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">Leave blank if you haven't set a passphrase in PayFast</p>
+                                </div>
+
+                                {/* Security Notice */}
+                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-amber-900 mb-1.5">Security Notice:</p>
+                                    <ul className="text-xs text-amber-800 space-y-0.5">
+                                        <li>• Your Merchant ID must match the PayFast account registered under your restaurant name.</li>
+                                        <li>• Ensure Split Payments are enabled on your PayFast account before saving.</li>
+                                        <li>• These credentials are stored securely and only used to process reservation deposits.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end mt-4 pt-4 border-t border-border">
+                            <button
+                                onClick={handleSavePayfastDetails}
+                                disabled={payfastLoading || payfastSaving}
+                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {payfastSaving
+                                    ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
+                                    : <><Save className="w-4 h-4" /> Save Payment Details</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 6. Capacity Management */}
                 <CapacitySection />
 
             </div>
