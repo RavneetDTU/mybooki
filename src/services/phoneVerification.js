@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const VERIFICATION_API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:9000';
+const VERIFICATION_API_URL = import.meta.env.VITE_VERIFICATION_API_URL || 'http://localhost:5014';
 
 /**
  * Phone Verification Service

@@ -1,6 +1,6 @@
+import { handleApiError } from '../utils/errorHandler';
 import apiClient from './api/axios';
 import { ADDRESS_ENDPOINTS, AUTH_ENDPOINTS, JARVIS_CONFIG_ENDPOINTS } from './api/endpoints';
-import { handleApiError } from '../utils/errorHandler';
 
 /**
  * Settings Service
@@ -213,6 +213,55 @@ export const settingsService = {
             throw new Error(message);
         }
     },
+
+    /**
+     * Get PayFast / Bank Details from Jarvis config.
+     * Reads settings.payfastMerchantId, payfastMerchantKey, payfastPassphrase.
+     */
+    getPayfastDetails: async (restaurantId) => {
+        try {
+            const response = await apiClient.get(JARVIS_CONFIG_ENDPOINTS.GET_DETAILS(restaurantId));
+            const s = response.data?.settings || {};
+            return {
+                payfastMerchantId:  s.payfastMerchantId  || '',
+                payfastMerchantKey: s.payfastMerchantKey || '',
+                payfastPassphrase:  s.payfastPassphrase  || '',
+            };
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to fetch PayFast details');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Save PayFast / Bank Details to Jarvis config.
+     * Uses same settings-merge pattern as updateDepositAmount.
+     * Split ratio hardcoded: 80% to restaurant, 20% to Booki (configurable later).
+     */
+    updatePayfastDetails: async (restaurantId, details) => {
+        try {
+            const payload = {
+                restaurantId: String(restaurantId),
+                settings: {
+                    payfastMerchantId:      String(details.payfastMerchantId  ?? '').trim(),
+                    payfastMerchantKey:     String(details.payfastMerchantKey ?? '').trim(),
+                    payfastPassphrase:      String(details.payfastPassphrase  ?? '').trim(),
+                    // Split ratio — hardcoded 80/20 for now, will be made configurable later
+                    payfastSplitPercentage: 80,
+                },
+            };
+            console.log('[Settings] Updating PayFast details for restaurant:', restaurantId);
+            const response = await apiClient.post(JARVIS_CONFIG_ENDPOINTS.UPDATE, payload);
+            console.log('[Settings] PayFast update response:', response.data);
+            return response.data;
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to update PayFast details');
+            throw new Error(message);
+        }
+    },
 };
+
+
+
 
 
