@@ -122,11 +122,18 @@ Browser (React SPA)
 Create a `.env` file in the project root:
 
 ```env
-VITE_VERIFICATION_API_URL=https://phone.jarviscalling.ai
+VITE_VERIFICATION_API_URL=https://phone.booki.co.za
 VITE_WIDGET_API_URL=https://widget.jarviscalling.ai
+# Optional override for Jarvis (defaults below if unset)
+# VITE_JARVIS_BASE_URL=https://phone.booki.co.za
 ```
 
-> The main reservations API base URL (`https://mybookiapis.jarviscalling.ai`) is hardcoded in `src/config/api.js`. The Jarvis config/payment endpoints auto-switch between `localhost:9000` (dev) and `https://phone.jarviscalling.ai` (prod) based on `import.meta.env.MODE`.
+> The main reservations API base URL is configured in `src/config/api.js`.  
+> Jarvis config / PayFast / refunds use `JARVIS_BASE_URL` from `src/services/api/endpoints.js`:
+>
+> - `VITE_JARVIS_BASE_URL` if set  
+> - else `http://localhost:5014` in development  
+> - else `https://phone.booki.co.za` in production  
 
 ---
 
@@ -168,9 +175,9 @@ The dev server runs on `http://localhost:5173` by default.
 | `/guests` | `Guests` | Full guest list with inline edit |
 | `/availability` | `Availability` | Operating hours and cover capacity settings |
 | `/stats` | `Stats` | Restaurant statistics overview |
-| `/payments` | `Payments` | PayFast payment history |
+| `/payments` | `Payments` | PayFast payment history + refunds |
 | `/failed-bookings` | `FailedBookings` | Failed/incomplete AI call bookings |
-| `/settings` | `Settings` | Address, deposit, password settings |
+| `/settings` | `Settings` | Address, deposit, email, password, **Bank Details (PayFast)** |
 | `/botsettings` | `BotSetting` | AI bot question flow editor |
 | `/set-number` | `SetNumber` | Twilio phone number management |
 | `/widget` | `Widget` | AI chat widget preview and configuration |
@@ -198,17 +205,22 @@ The dev server runs on `http://localhost:5173` by default.
 | `GET` | `/restaurants/:restaurantId/transcriptions/:bookingId` | Fetch call transcription |
 | `PATCH` | `/settings/password` | Change password |
 
-### Jarvis Config & Payment API (`phone.jarviscalling.ai`)
+### Jarvis Config & Payment API (`phone.booki.co.za` / local `:5014`)
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/restaurant/:restaurantId/details` | Fetch bot config, deposit, question flow |
-| `POST` | `/api/update-config` | Update restaurant settings / deposit amount |
+| `GET` | `/api/restaurant/:restaurantId/details` | Fetch bot config, deposit, question flow, PayFast settings |
+| `POST` | `/api/update-config` | Merge-update settings (deposit, email, **PayFast merchant**, capacity, etc.) |
 | `POST` | `/api/question/add` | Add a question to the bot flow |
 | `DELETE` | `/api/question/delete` | Delete a question from the bot flow |
 | `GET` | `/api/payfast/payments/:restaurantId` | Fetch PayFast payment history |
 | `POST` | `/api/booking/manual/:restaurantId` | Create a manual booking with SMS notification |
 | `POST` | `/api/verify/phone` | Verify a phone number via Twilio Lookup |
+
+**PayFast split (restaurant receiving merchant)**  
+Settings → Bank Details saves `payfastMerchantId`, `payfastMerchantKey`, `payfastPassphrase`, and `payfastSplitPercentage: 80` via `POST /api/update-config` into Firestore `tenants/{id}.settings`.  
+
+Customer checkout + money split run on **Jarvis** (`GET /payment/:paymentId`), not in this dashboard. `/payments` here is admin history only.
 
 ### Widget API (`widget.jarviscalling.ai`)
 
