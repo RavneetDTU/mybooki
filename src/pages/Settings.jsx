@@ -411,82 +411,7 @@ export function Settings() {
                     </div>
                 </div>
 
-
-                {/* 4. Change Password Section */}
-
-                <div className="bg-white border border-border rounded-lg overflow-hidden">
-                    <div className="bg-muted/30 border-b border-border px-5 py-3">
-                        <div className="flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-foreground" />
-                            <h2 className="font-heading font-semibold text-foreground">
-                                Change Password
-                            </h2>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Update your account password for security
-                        </p>
-                    </div>
-
-                    <div className="p-5">
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-medium text-foreground mb-1.5">Current Password</label>
-                                <input
-                                    type="password"
-                                    value={passwordData.currentPassword}
-                                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
-                                    placeholder="Enter current password"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-foreground mb-1.5">New Password</label>
-                                <input
-                                    type="password"
-                                    value={passwordData.newPassword}
-                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
-                                    placeholder="Enter new password (min 8 characters)"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-foreground mb-1.5">Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    value={passwordData.confirmPassword}
-                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
-                                    placeholder="Confirm new password"
-                                />
-                            </div>
-
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <p className="text-xs font-medium text-blue-900 mb-1.5">Password Requirements:</p>
-                                <ul className="text-xs text-blue-800 space-y-0.5">
-                                    <li>• Minimum 8 characters</li>
-                                    <li>• Mix of uppercase and lowercase letters (recommended)</li>
-                                    <li>• At least one number (recommended)</li>
-                                    <li>• At least one special character (recommended)</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end mt-4 pt-4 border-t border-border">
-                            <button
-                                onClick={handleChangePassword}
-                                disabled={passwordSaving}
-                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {passwordSaving
-                                    ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
-                                    : <><Lock className="w-4 h-4" /> Change Password</>
-                                }
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 5. Bank Details (PayFast) Section */}
+                {/* 4. Bank Details (PayFast) Section */}
                 <div className="bg-white border border-border rounded-lg overflow-hidden">
                     <div className="bg-muted/30 border-b border-border px-5 py-3">
                         <div className="flex items-center gap-2">
@@ -599,6 +524,79 @@ export function Settings() {
                                 {payfastSaving
                                     ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
                                     : <><Save className="w-4 h-4" /> Save Payment Details</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. Change Password Section */}
+                <div className="bg-white border border-border rounded-lg overflow-hidden">
+                    <div className="bg-muted/30 border-b border-border px-5 py-3">
+                        <div className="flex items-center gap-2">
+                            <Lock className="w-4 h-4 text-foreground" />
+                            <h2 className="font-heading font-semibold text-foreground">
+                                Change Password
+                            </h2>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Update your account password for security
+                        </p>
+                    </div>
+
+                    <div className="p-5">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1.5">Current Password</label>
+                                <input
+                                    type="password"
+                                    value={passwordData.currentPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                    placeholder="Enter current password"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1.5">New Password</label>
+                                <input
+                                    type="password"
+                                    value={passwordData.newPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                    placeholder="Enter new password (min 8 characters)"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-foreground mb-1.5">Confirm New Password</label>
+                                <input
+                                    type="password"
+                                    value={passwordData.confirmPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                    placeholder="Confirm new password"
+                                />
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-blue-900 mb-1.5">Password Requirements:</p>
+                                <ul className="text-xs text-blue-800 space-y-0.5">
+                                    <li>• Minimum 8 characters</li>
+                                    <li>• Mix of uppercase and lowercase letters (recommended)</li>
+                                    <li>• At least one number (recommended)</li>
+                                    <li>• At least one special character (recommended)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end mt-4 pt-4 border-t border-border">
+                            <button
+                                onClick={handleChangePassword}
+                                disabled={passwordSaving}
+                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {passwordSaving
+                                    ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
+                                    : <><Lock className="w-4 h-4" /> Change Password</>
                                 }
                             </button>
                         </div>
