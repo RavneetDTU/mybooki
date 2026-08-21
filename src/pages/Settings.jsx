@@ -1,6 +1,5 @@
 import { CreditCard, Eye, EyeOff, Loader, Lock, Mail, MapPin, Save, ShieldCheck } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { CapacitySection } from '../components/CapacitySection';
 import { settingsService } from '../services/settings';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -13,6 +12,7 @@ export function Settings() {
     const [emailLoading, setEmailLoading] = useState(true);
     const [emailSaving, setEmailSaving] = useState(false);
     const [depositAmount, setDepositAmount] = useState('');
+    const [securityDepositEnabled, setSecurityDepositEnabled] = useState(false);
     const [depositLoading, setDepositLoading] = useState(true);
     const [depositSaving, setDepositSaving] = useState(false);
 
@@ -56,15 +56,16 @@ export function Settings() {
         }
     }, [restaurantId]);
 
-    // Load deposit amount from API
+    // Load deposit amount from API.
+    // Existing restaurants: depositAmount > 0 → Yes; depositAmount = 0 → No.
     const loadDepositAmount = useCallback(async () => {
         if (!restaurantId) return;
         setDepositLoading(true);
         try {
             const amount = await settingsService.getDepositAmount(restaurantId);
-            if (amount !== undefined && amount !== null) {
-                setDepositAmount(amount);
-            }
+            const numericAmount = Number(amount) || 0;
+            setSecurityDepositEnabled(numericAmount > 0);
+            setDepositAmount(numericAmount > 0 ? amount : '');
         } catch (error) {
             console.error('[Settings] Failed to load deposit amount:', error);
         } finally {
@@ -129,6 +130,32 @@ export function Settings() {
         } catch (error) {
             console.error('[Settings] Failed to save deposit amount:', error);
             alert('Failed to update deposit amount');
+        } finally {
+            setDepositSaving(false);
+        }
+    };
+
+    // Yes → show amount editor (existing Save Amount). No → persist depositAmount = 0 immediately
+    // so a previous R5 cannot keep charging after deposits are disabled.
+    const handleSecurityDepositToggle = async (enabled) => {
+        if (enabled) {
+            setSecurityDepositEnabled(true);
+            return;
+        }
+
+        if (!securityDepositEnabled) return;
+
+        setSecurityDepositEnabled(false);
+        setDepositSaving(true);
+        try {
+            await settingsService.updateDepositAmount(restaurantId, 0);
+            setDepositAmount('');
+            alert('Security deposit disabled. Deposit amount set to R0.');
+        } catch (error) {
+            console.error('[Settings] Failed to disable security deposit:', error);
+            // Revert UI if backend write failed so we do not show No with a stale R5 still stored
+            setSecurityDepositEnabled(true);
+            alert('Failed to disable security deposit. Please try again.');
         } finally {
             setDepositSaving(false);
         }
@@ -368,50 +395,95 @@ export function Settings() {
                                 <span className="ml-2 text-sm text-muted-foreground">Loading amount…</span>
                             </div>
                         ) : (
-                            <div>
-                                <label className="block text-xs font-medium text-foreground mb-1.5">
-                                    Amount in Rands
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R</span>
-                                    <input
-                                        type="number"
-                                        value={depositAmount}
-                                        onChange={(e) => setDepositAmount(e.target.value)}
-                                        min="0"
-                                        step="any"
-                                        className="w-full pl-7 pr-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
-                                        placeholder="0.00"
-                                    />
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-foreground mb-2">
+                                        Do you want a security money deposit for booking?
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSecurityDepositToggle(true)}
+                                            disabled={depositSaving}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                securityDepositEnabled
+                                                    ? 'bg-foreground text-white'
+                                                    : 'border border-border text-muted-foreground hover:bg-muted/20 hover:text-foreground'
+                                            }`}
+                                        >
+                                            Yes
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSecurityDepositToggle(false)}
+                                            disabled={depositSaving}
+                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                !securityDepositEnabled
+                                                    ? 'bg-foreground text-white'
+                                                    : 'border border-border text-muted-foreground hover:bg-muted/20 hover:text-foreground'
+                                            }`}
+                                        >
+                                            No
+                                        </button>
+                                    </div>
                                 </div>
-                                
-                                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                    <p className="text-xs font-medium text-amber-900 mb-1.5">Important Instructions:</p>
-                                    <ul className="text-xs text-amber-800 space-y-0.5">
-                                        <li>• This exact amount will be required from customers to secure a booking.</li>
-                                        <li>• Changes made here will reflect immediately on your live booking page.</li>
-                                        <li>• Please avoid frequent or unnecessary changes to prevent customer confusion.</li>
-                                    </ul>
-                                </div>
+
+                                {securityDepositEnabled ? (
+                                    <div>
+                                        <label className="block text-xs font-medium text-foreground mb-1.5">
+                                            Amount in Rands
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R</span>
+                                            <input
+                                                type="number"
+                                                value={depositAmount}
+                                                onChange={(e) => setDepositAmount(e.target.value)}
+                                                min="0"
+                                                step="any"
+                                                className="w-full pl-7 pr-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+
+                                        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                            <p className="text-xs font-medium text-amber-900 mb-1.5">Important Instructions:</p>
+                                            <ul className="text-xs text-amber-800 space-y-0.5">
+                                                <li>• This exact amount will be required from customers to secure a booking.</li>
+                                                <li>• Changes made here will reflect immediately on your live booking page.</li>
+                                                <li>• Please avoid frequent or unnecessary changes to prevent customer confusion.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-muted/30 border border-border rounded-lg p-3">
+                                        <p className="text-xs text-muted-foreground">
+                                            No security deposit will be collected. Deposit amount is set to R0.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
 
-                        <div className="flex justify-end mt-4 pt-4 border-t border-border">
-                            <button
-                                onClick={handleSaveDepositAmount}
-                                disabled={depositLoading || depositSaving}
-                                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {depositSaving
-                                    ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
-                                    : <><Save className="w-4 h-4" /> Save Amount</>
-                                }
-                            </button>
-                        </div>
+                        {securityDepositEnabled && (
+                            <div className="flex justify-end mt-4 pt-4 border-t border-border">
+                                <button
+                                    onClick={handleSaveDepositAmount}
+                                    disabled={depositLoading || depositSaving}
+                                    className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {depositSaving
+                                        ? <><Loader className="w-4 h-4 animate-spin" /> Saving…</>
+                                        : <><Save className="w-4 h-4" /> Save Amount</>
+                                    }
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* 4. Bank Details (PayFast) Section */}
+                {/* 4. Bank Details (PayFast) Section — only when security deposit is enabled */}
+                {securityDepositEnabled && (
                 <div className="bg-white border border-border rounded-lg overflow-hidden">
                     <div className="bg-muted/30 border-b border-border px-5 py-3">
                         <div className="flex items-center gap-2">
@@ -529,6 +601,7 @@ export function Settings() {
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* 5. Change Password Section */}
                 <div className="bg-white border border-border rounded-lg overflow-hidden">
@@ -602,9 +675,6 @@ export function Settings() {
                         </div>
                     </div>
                 </div>
-
-                {/* 6. Capacity Management */}
-                <CapacitySection />
 
             </div>
         </div>
