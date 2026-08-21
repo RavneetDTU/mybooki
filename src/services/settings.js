@@ -215,6 +215,27 @@ export const settingsService = {
     },
 
     /**
+     * Get restaurant phone number(s) from Jarvis tenant details.
+     * Phone numbers live on the tenant as phoneNumbers[] (GET /api/restaurant/:id/details).
+     */
+    getPhoneNumber: async (restaurantId) => {
+        try {
+            console.log('[Settings] Fetching phone numbers for restaurantId:', restaurantId);
+            const response = await apiClient.get(JARVIS_CONFIG_ENDPOINTS.GET_DETAILS(restaurantId));
+            const phones = response.data?.phoneNumbers;
+            const list = Array.isArray(phones) ? phones.filter(Boolean) : [];
+            // Single-field UI: show primary (first) number; empty string if none configured
+            return {
+                phoneNumber: list[0] || '',
+                phoneNumbers: list,
+            };
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to fetch phone number');
+            throw new Error(message);
+        }
+    },
+
+    /**
      * Get PayFast / Bank Details from Jarvis config.
      * Reads settings.payfastMerchantId, payfastMerchantKey, payfastPassphrase.
      */

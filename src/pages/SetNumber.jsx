@@ -2,8 +2,10 @@ import { Phone, Save, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { settingsService } from '../services/settings';
 import { phoneVerificationService } from '../services/phoneVerification';
+import { useAuthStore } from '../store/useAuthStore';
 
 export function SetNumber() {
+    const { restaurantId } = useAuthStore();
     const [phoneNumber, setPhoneNumber] = useState('');
     const [loading, setLoading] = useState(true);
     const [verificationStatus, setVerificationStatus] = useState('idle'); // 'idle' | 'verifying' | 'valid' | 'invalid' | 'error'
@@ -11,13 +13,19 @@ export function SetNumber() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+        if (!restaurantId) {
+            setLoading(false);
+            return;
+        }
         loadPhoneNumber();
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [restaurantId]);
 
     const loadPhoneNumber = async () => {
+        setLoading(true);
         try {
-            const data = await settingsService.getPhoneNumber();
-            setPhoneNumber(data.phoneNumber);
+            const data = await settingsService.getPhoneNumber(restaurantId);
+            setPhoneNumber(data.phoneNumber || '');
         } catch (error) {
             console.error("Failed to load phone number", error);
         } finally {
