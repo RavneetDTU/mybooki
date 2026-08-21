@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
 import { useState } from 'react';
+import { CapacitySection } from '../components/CapacitySection';
 import apiClient from '../services/api/axios';
 import { AVAILABILITY_ENDPOINTS } from '../services/api/endpoints';
 import { useAuthStore } from '../store/useAuthStore';
@@ -162,7 +163,7 @@ export function Availability() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-6 py-4 space-y-5">
         {/* Calendar Header */}
         <div className="bg-white border border-border rounded-lg p-4">
           {/* Month Navigation */}
@@ -284,6 +285,9 @@ export function Availability() {
             })}
           </div>
         </div>
+
+        {/* Capacity Management — same component previously on Settings */}
+        <CapacitySection />
       </div>
 
       {/* Edit Modal */}
