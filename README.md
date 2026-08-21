@@ -218,9 +218,9 @@ The dev server runs on `http://localhost:5173` by default.
 | `POST` | `/api/verify/phone` | Verify a phone number via Twilio Lookup |
 
 **PayFast split (restaurant receiving merchant)**  
-Settings → Bank Details saves `payfastMerchantId`, `payfastMerchantKey`, `payfastPassphrase`, and `payfastSplitPercentage: 80` via `POST /api/update-config` into Firestore `tenants/{id}.settings`.  
+Settings → Bank Details saves `payfastMerchantId`, `payfastMerchantKey`, `payfastPassphrase`, and `payfastSplitPercentage: 80` via `POST /api/update-config` into Firestore `tenants/{id}.settings`.
 
-Customer checkout + money split run on **Jarvis** (`GET /payment/:paymentId`), not in this dashboard. `/payments` here is admin history only.
+Customer checkout is **[mybookip](https://github.com/RavneetDTU/mybookip)** at `https://payment.booki.co.za` (SMS links). This dashboard `/payments` page is admin history + refunds only.
 
 ### Widget API (`widget.jarviscalling.ai`)
 
