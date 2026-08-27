@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { authService } from '../services/auth';
+import { bookiopsService, isBookiOpsEnabled } from '../services/bookiops';
 
 const STORAGE_KEYS = {
     AUTH_TOKEN: 'authToken',
     RESTAURANT_ID: 'restaurantId',
     USER: 'authUser',
+    BOOKIOPS_RESTAURANT_TOKEN: 'bookiopsRestaurantToken',
 };
 
 /**
@@ -22,6 +24,7 @@ export const useAuthStore = create((set) => ({
     user: restoreUserFromStorage(),
     token: localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || null,
     restaurantId: localStorage.getItem(STORAGE_KEYS.RESTAURANT_ID) || null,
+    bookiopsRestaurantToken: localStorage.getItem(STORAGE_KEYS.BOOKIOPS_RESTAURANT_TOKEN) || null,
     isAuthenticated: !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN),
     isLoading: false,
     error: null,
@@ -31,6 +34,7 @@ export const useAuthStore = create((set) => ({
     /**
      * Login with { email, password }.
      * Persists token, restaurantId, and user payload to localStorage.
+     * When BookiOps is enabled, also obtains a restaurant ingest JWT (non-blocking on failure).
      */
     login: async (credentials) => {
         set({ isLoading: true, error: null });
@@ -44,10 +48,34 @@ export const useAuthStore = create((set) => ({
                 localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
                 localStorage.setItem(STORAGE_KEYS.RESTAURANT_ID, user.restaurantId);
 
+                let bookiopsRestaurantToken = null;
+                if (isBookiOpsEnabled() && user.role !== 'admin') {
+                    try {
+                        const session = await bookiopsService.createRestaurantSession(
+                            credentials.email,
+                            credentials.password
+                        );
+                        bookiopsRestaurantToken = session.token;
+                        localStorage.setItem(
+                            STORAGE_KEYS.BOOKIOPS_RESTAURANT_TOKEN,
+                            bookiopsRestaurantToken
+                        );
+                    } catch (bookiopsError) {
+                        console.warn(
+                            '[Auth] BookiOps restaurant session unavailable:',
+                            bookiopsError.message
+                        );
+                        localStorage.removeItem(STORAGE_KEYS.BOOKIOPS_RESTAURANT_TOKEN);
+                    }
+                } else {
+                    localStorage.removeItem(STORAGE_KEYS.BOOKIOPS_RESTAURANT_TOKEN);
+                }
+
                 set({
                     user,
                     token,
                     restaurantId: user.restaurantId,
+                    bookiopsRestaurantToken,
                     isAuthenticated: true,
                     isLoading: false,
                     error: null,
@@ -67,11 +95,13 @@ export const useAuthStore = create((set) => ({
     logout: () => {
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.RESTAURANT_ID);
+        localStorage.removeItem(STORAGE_KEYS.BOOKIOPS_RESTAURANT_TOKEN);
 
         set({
             user: null,
             token: null,
             restaurantId: null,
+            bookiopsRestaurantToken: null,
             isAuthenticated: false,
             error: null,
         });
