@@ -147,14 +147,6 @@ export function BotSetting() {
             </p>
           </div>
         </div>
-        <button
-          onClick={saveConfig}
-          disabled={saving || loading}
-          className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {saving ? 'Saving...' : 'Save Configuration'}
-        </button>
       </div>
 
       {/* Horizontal rule */}
@@ -194,6 +186,16 @@ export function BotSetting() {
                   onUpdateMessage={handleUpdateMessage}
                 />
               </div>
+              <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={saveConfig}
+                  disabled={saving}
+                  className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saving ? 'Saving...' : 'Save Greeting'}
+                </button>
+              </div>
             </div>
           )}
 
@@ -227,6 +229,16 @@ export function BotSetting() {
                 />
               ))}
             </div>
+            <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
+              <button
+                onClick={saveConfig}
+                disabled={saving}
+                className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? 'Saving...' : 'Save Questions'}
+              </button>
+            </div>
           </div>
 
           <div className="border-t border-gray-200" />
@@ -246,6 +258,16 @@ export function BotSetting() {
                   isFullScreen={true}
                   onUpdateMessage={handleUpdateMessage}
                 />
+              </div>
+              <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={saveConfig}
+                  disabled={saving}
+                  className="px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saving ? 'Saving...' : 'Save Confirmation'}
+                </button>
               </div>
             </div>
           )}

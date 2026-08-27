@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/useAuthStore';
 export function SetNumber() {
     const { restaurantId } = useAuthStore();
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [updateNumber, setUpdateNumber] = useState('');
     const [loading, setLoading] = useState(true);
     const [verificationStatus, setVerificationStatus] = useState('idle'); // 'idle' | 'verifying' | 'valid' | 'invalid' | 'error'
     const [verificationResult, setVerificationResult] = useState(null);
@@ -34,7 +35,7 @@ export function SetNumber() {
     };
 
     const handleSaveNumber = async () => {
-        if (!phoneNumber.trim()) {
+        if (!updateNumber.trim()) {
             setVerificationStatus('error');
             setVerificationResult({ error: 'Please enter a phone number' });
             return;
@@ -46,7 +47,7 @@ export function SetNumber() {
             setVerificationResult(null);
 
             // Step 1: Verify the phone number with Twilio Lookup
-            const verification = await phoneVerificationService.verifyPhoneNumber(phoneNumber);
+            const verification = await phoneVerificationService.verifyPhoneNumber(updateNumber);
 
             if (!verification.success || !verification.valid) {
                 setVerificationStatus('invalid');
@@ -61,7 +62,7 @@ export function SetNumber() {
             setVerificationStatus('valid');
             setVerificationResult(verification);
 
-            // await settingsService.updatePhoneNumber(phoneNumber); // API endpoint not available yet
+            // await settingsService.updatePhoneNumber(updateNumber); // API endpoint not available yet
             alert('Phone number verified successfully! (Update API not available)');
 
         } catch (error) {
@@ -118,8 +119,28 @@ export function SetNumber() {
                                 <input
                                     type="tel"
                                     value={phoneNumber}
+                                    readOnly
+                                    className="w-full px-3 py-2 border border-border rounded-md text-sm bg-slate-50 text-muted-foreground cursor-not-allowed"
+                                    placeholder="+1 (555) 123-4567"
+                                />
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1.5">
+                                This number will be used for AI-powered reservation calls and call forwarding. Ensure it can receive incoming calls.
+                            </p>
+                        </div>
+
+                        <div className="mt-4">
+                            <label className="block text-xs font-medium text-foreground mb-1.5">
+                                Update Number
+                            </label>
+                            {loading ? (
+                                <div className="animate-pulse h-10 w-full bg-slate-100 rounded-md"></div>
+                            ) : (
+                                <input
+                                    type="tel"
+                                    value={updateNumber}
                                     onChange={(e) => {
-                                        setPhoneNumber(e.target.value);
+                                        setUpdateNumber(e.target.value);
                                         setVerificationStatus('idle');
                                         setVerificationResult(null);
                                     }}
@@ -134,7 +155,7 @@ export function SetNumber() {
                                 />
                             )}
                             <p className="text-xs text-muted-foreground mt-1.5">
-                                This number will be used for AI-powered reservation calls and call forwarding. Ensure it can receive incoming calls.
+                                Enter a new number to replace the current restaurant phone number.
                             </p>
 
                             {/* Verification Status */}

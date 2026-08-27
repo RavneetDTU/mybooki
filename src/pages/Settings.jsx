@@ -9,6 +9,7 @@ export function Settings() {
     const [addressSaving, setAddressSaving] = useState(false);
     const [passwordSaving, setPasswordSaving] = useState(false);
     const [email, setEmail] = useState('');
+    const [updateEmail, setUpdateEmail] = useState('');
     const [emailLoading, setEmailLoading] = useState(true);
     const [emailSaving, setEmailSaving] = useState(false);
     const [depositAmount, setDepositAmount] = useState('');
@@ -162,9 +163,16 @@ export function Settings() {
     };
 
     const handleSaveEmail = async () => {
+        if (!updateEmail.trim()) {
+            alert('Please enter an email address');
+            return;
+        }
+
         setEmailSaving(true);
         try {
-            await settingsService.updateRestaurantEmail(restaurantId, email);
+            await settingsService.updateRestaurantEmail(restaurantId, updateEmail);
+            setEmail(updateEmail.trim());
+            setUpdateEmail('');
             alert('Email updated successfully!');
         } catch (error) {
             console.error('[Settings] Failed to save restaurant email:', error);
@@ -342,21 +350,40 @@ export function Settings() {
                                 <span className="ml-2 text-sm text-muted-foreground">Loading email…</span>
                             </div>
                         ) : (
-                            <div>
-                                <label className="block text-xs font-medium text-foreground mb-1.5">
-                                    Email Address
-                                </label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
-                                    placeholder="restaurant@example.com"
-                                />
-                                <p className="text-xs text-muted-foreground mt-1.5">
-                                    This email will be used for reservation confirmations and customer communications
-                                </p>
-                            </div>
+                            <>
+                                <div>
+                                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                                        Email Address
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        readOnly
+                                        className="w-full px-3 py-2 border border-border rounded-md text-sm bg-slate-50 text-muted-foreground cursor-not-allowed"
+                                        placeholder="restaurant@example.com"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1.5">
+                                        This email will be used for reservation confirmations and customer communications
+                                    </p>
+                                </div>
+
+                                <div className="mt-4">
+                                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                                        Update Email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={updateEmail}
+                                        onChange={(e) => setUpdateEmail(e.target.value)}
+                                        disabled={emailSaving}
+                                        className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-foreground focus:border-foreground transition-all"
+                                        placeholder="restaurant@example.com"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1.5">
+                                        Enter a new email to replace the current restaurant email.
+                                    </p>
+                                </div>
+                            </>
                         )}
 
                         <div className="flex justify-end mt-4 pt-4 border-t border-border">
