@@ -29,3 +29,6 @@ frontend_integration_guide.md.resolved
 *.njsproj
 *.sln
 *.sw?
+
+# Local documentation (not committed / not pushed)
+docs/
