@@ -17,6 +17,13 @@ export const DATE_FORMATS = {
     DISPLAY_LONG: 'dddd, MMMM DD, YYYY', // Thursday, January 22, 2026
 };
 
+// Reservation / Other Calls list period filter
+export const DATE_PERIODS = {
+    TODAY: 'today',
+    LAST_7: '7d',
+    LAST_30: '30d',
+};
+
 // Reservation Status
 export const RESERVATION_STATUS = {
     CONFIRMED: 'confirmed',

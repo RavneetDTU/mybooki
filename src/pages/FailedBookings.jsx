@@ -6,7 +6,9 @@ import {
 import { failedBookingsService } from '../services/failedBookings';
 import { otherMessagesService } from '../services/otherMessages';
 import { useAuthStore } from '../store/useAuthStore';
-import { formatTime12Hour } from '../utils/dateUtils';
+import { formatTime12Hour, getLastNDaysRange, formatDateRangeLabel } from '../utils/dateUtils';
+import { DATE_PERIODS } from '../config/constants';
+import DatePeriodFilter from '../components/DatePeriodFilter';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -128,7 +130,7 @@ const FailedBookingModal = ({ isOpen, onClose, booking }) => {
 
 // ─── Failed Booking Card (light red tint) ────────────────────────────────────
 
-const FailedBookingCard = ({ booking, onView }) => {
+const FailedBookingCard = ({ booking, onView, showDate = false }) => {
     const name = isMissing(booking.guest_name) ? 'Unknown Caller' : booking.guest_name;
     const missing = countMissing(booking);
 
@@ -153,6 +155,11 @@ const FailedBookingCard = ({ booking, onView }) => {
 
             {/* Details row */}
             <div className="flex items-center gap-5 px-4 py-3 flex-wrap">
+                {showDate && booking.call_date && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <span className="text-xs font-medium">{booking.call_date}</span>
+                    </div>
+                )}
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <span className="text-xs">{formatTime12Hour(booking.call_time)}</span>
@@ -182,7 +189,7 @@ const FailedBookingCard = ({ booking, onView }) => {
 
 // ─── Manager Message Card (neutral / standard) ───────────────────────────────
 
-const MessageCard = ({ message }) => {
+const MessageCard = ({ message, showDate = false }) => {
     const isLong = message.message && message.message.length > 160;
     const [expanded, setExpanded] = useState(false);
 
@@ -207,6 +214,11 @@ const MessageCard = ({ message }) => {
             {/* Meta + Message */}
             <div className="px-4 py-3 space-y-2.5">
                 <div className="flex items-center gap-5 flex-wrap">
+                    {showDate && message.call_date && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <span className="text-xs font-medium">{message.call_date}</span>
+                        </div>
+                    )}
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                         <Clock className="w-3.5 h-3.5" />
                         <span className="text-xs">{formatTime12Hour(message.call_time)}</span>
@@ -265,7 +277,9 @@ const SectionHeader = ({ icon: Icon, title, count, color }) => (
 
 export default function FailedBookings() {
     const { restaurantId } = useAuthStore();
+    const [period, setPeriod] = useState(DATE_PERIODS.TODAY);
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const isTodayPeriod = period === DATE_PERIODS.TODAY;
 
     const [bookings, setBookings] = useState([]);
     const [totalFailed, setTotalFailed] = useState(0);
@@ -280,9 +294,12 @@ export default function FailedBookings() {
         if (!restaurantId) return;
         if (!silent) setIsLoading(true);
         try {
+            const query = isTodayPeriod
+                ? selectedDate
+                : getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30);
             const [failedData, msgData] = await Promise.all([
-                failedBookingsService.getFailedBookings(selectedDate, restaurantId),
-                otherMessagesService.getOtherMessages(selectedDate, restaurantId),
+                failedBookingsService.getFailedBookings(query, restaurantId),
+                otherMessagesService.getOtherMessages(query, restaurantId),
             ]);
             setBookings(failedData.failed_bookings || []);
             setTotalFailed(failedData.total_failed_bookings || 0);
@@ -299,7 +316,7 @@ export default function FailedBookings() {
         } finally {
             if (!silent) setIsLoading(false);
         }
-    }, [selectedDate, restaurantId]);
+    }, [selectedDate, restaurantId, period, isTodayPeriod]);
 
     useEffect(() => { 
         fetchAll(); 
@@ -313,6 +330,13 @@ export default function FailedBookings() {
     }, [fetchAll]);
 
     // ── date helpers ──────────────────────────────────────────────────────────
+    const handlePeriodChange = (nextPeriod) => {
+        setPeriod(nextPeriod);
+        if (nextPeriod === DATE_PERIODS.TODAY) {
+            setSelectedDate(new Date());
+        }
+    };
+
     const formatDateLong = (date) =>
         date.toLocaleDateString('en-US', {
             weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
@@ -350,37 +374,48 @@ export default function FailedBookings() {
                         Other Calls
                     </h1>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                        Review failed calls and manager messages for the selected date
+                        Review failed calls and manager messages
                     </p>
                 </div>
             </div>
 
             {/* Content */}
             <div className="max-w-7xl mx-auto px-6 py-5">
-                {/* Top bar: date nav + stat pills */}
-                <div className="flex items-start justify-between gap-6 mb-5">
-                    {/* Date Navigation */}
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={goToPreviousDay}
-                            className="px-3 py-2 border border-border rounded-md hover:bg-muted/20 cursor-pointer hover:border-foreground transition-all"
-                            title="Previous Day"
-                        >
-                            <ChevronLeft className="w-5 h-5 text-foreground" />
-                        </button>
-                        <input
-                            type="date"
-                            value={dateToInputValue(selectedDate)}
-                            onChange={(e) => setSelectedDate(inputValueToDate(e.target.value))}
-                            className="px-4 py-2 bg-white border-2 border-foreground rounded-lg text-sm font-heading focus:outline-none focus:ring-2 focus:ring-foreground transition-all cursor-pointer"
-                        />
-                        <button
-                            onClick={goToNextDay}
-                            className="px-3 py-2 border border-border rounded-md hover:bg-muted/20 cursor-pointer hover:border-foreground transition-all"
-                            title="Next Day"
-                        >
-                            <ChevronRight className="w-5 h-5 text-foreground" />
-                        </button>
+                {/* Top bar: period + date nav + stat pills */}
+                <div className="flex items-start justify-between gap-6 mb-5 flex-wrap">
+                    <div className="flex flex-col gap-3">
+                        <DatePeriodFilter value={period} onChange={handlePeriodChange} />
+                        {isTodayPeriod ? (
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={goToPreviousDay}
+                                    className="px-3 py-2 border border-border rounded-md hover:bg-muted/20 cursor-pointer hover:border-foreground transition-all"
+                                    title="Previous Day"
+                                >
+                                    <ChevronLeft className="w-5 h-5 text-foreground" />
+                                </button>
+                                <input
+                                    type="date"
+                                    value={dateToInputValue(selectedDate)}
+                                    onChange={(e) => setSelectedDate(inputValueToDate(e.target.value))}
+                                    className="px-4 py-2 bg-white border-2 border-foreground rounded-lg text-sm font-heading focus:outline-none focus:ring-2 focus:ring-foreground transition-all cursor-pointer"
+                                />
+                                <button
+                                    onClick={goToNextDay}
+                                    className="px-3 py-2 border border-border rounded-md hover:bg-muted/20 cursor-pointer hover:border-foreground transition-all"
+                                    title="Next Day"
+                                >
+                                    <ChevronRight className="w-5 h-5 text-foreground" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="px-4 py-2 bg-white border-2 border-foreground rounded-lg text-sm font-heading w-fit">
+                                {formatDateRangeLabel(
+                                    getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).from,
+                                    getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).to
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Stat pills */}
@@ -399,7 +434,14 @@ export default function FailedBookings() {
                 {/* Date label */}
                 <p className="text-sm text-muted-foreground mb-5">
                     Showing results for{' '}
-                    <span className="font-medium text-foreground">{formatDateLong(selectedDate)}</span>
+                    <span className="font-medium text-foreground">
+                        {isTodayPeriod
+                            ? formatDateLong(selectedDate)
+                            : formatDateRangeLabel(
+                                getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).from,
+                                getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).to
+                            )}
+                    </span>
                 </p>
 
                 {/* Loading */}
@@ -410,7 +452,9 @@ export default function FailedBookings() {
                 ) : isEmpty ? (
                     <div className="text-center py-16">
                         <PhoneOff className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-30" />
-                        <p className="text-muted-foreground text-sm">No records found for this date</p>
+                        <p className="text-muted-foreground text-sm">
+                            {isTodayPeriod ? 'No records found for this date' : 'No records found in this period'}
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-8">
@@ -429,6 +473,7 @@ export default function FailedBookings() {
                                             key={booking.id}
                                             booking={booking}
                                             onView={setSelectedBooking}
+                                            showDate={!isTodayPeriod}
                                         />
                                     ))}
                                 </div>
@@ -446,7 +491,7 @@ export default function FailedBookings() {
                                 />
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                     {messages.map((msg) => (
-                                        <MessageCard key={msg.id} message={msg} />
+                                        <MessageCard key={msg.id} message={msg} showDate={!isTodayPeriod} />
                                     ))}
                                 </div>
                             </section>

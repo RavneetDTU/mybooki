@@ -70,6 +70,46 @@ export const addDays = (date, days) => {
 };
 
 /**
+ * Inclusive last-N-days window ending today (Today + previous N-1 days).
+ * @param {number} days - 7 or 30
+ * @returns {{ from: string, to: string, fromDate: Date, toDate: Date }}
+ */
+export const getLastNDaysRange = (days) => {
+    const toDate = getToday();
+    const fromDate = addDays(toDate, -(days - 1));
+    return {
+        from: formatDateForAPI(fromDate),
+        to: formatDateForAPI(toDate),
+        fromDate,
+        toDate,
+    };
+};
+
+/**
+ * Human-readable range, e.g. "Sep 8 – Sep 14, 2026"
+ * @param {string} fromString - YYYY-MM-DD
+ * @param {string} toString - YYYY-MM-DD
+ */
+export const formatDateRangeLabel = (fromString, toString) => {
+    const from = parseAPIDate(fromString);
+    const to = parseAPIDate(toString);
+    const fromLabel = from.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const toLabel = to.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${fromLabel} – ${toLabel}`;
+};
+
+/**
+ * Build mybookiapis query params. Date → ?date=; {from,to} → ?from=&to=
+ * Never mix the two (API returns 400).
+ */
+export const toDateQueryParams = (dateOrRange) => {
+    if (dateOrRange instanceof Date) {
+        return { date: formatDateForAPI(dateOrRange) };
+    }
+    return { from: dateOrRange.from, to: dateOrRange.to };
+};
+
+/**
  * Format a time string to 12-hour format (e.g., "19:00" -> "07:00 PM").
  * If the API already returns an AM/PM suffix (e.g., "01:00 PM"), it is
  * returned as-is so we never end up with doubled suffixes like "01:00 PM AM".
