@@ -9,6 +9,31 @@ import { formatDateForAPI } from '../utils/dateUtils';
  * Every method requires `restaurantId` to scope requests to the correct restaurant.
  */
 
+const mapReservation = (reservation) => ({
+    id: reservation.id,
+    bookingId: reservation.booking_id,   // e.g. "BK-A0E78660" — used for transcription API
+    time: reservation.time,
+    bookerName: reservation.guest_name,
+    phone: reservation.phone || reservation.guest?.phone || '',
+    guests: reservation.party_size,
+    tableNumber: reservation.table_number || null,
+    status: reservation.status,
+    source: reservation.source,
+    callId: reservation.call_id,
+    date: reservation.date,
+    notes: reservation.notes,
+    guestData: reservation.guest,
+    callData: reservation.call,
+    paymentStatus: reservation.payment_status,
+    paymentMethod: reservation.payment_method,
+    paymentAmount: reservation.payment_amount,
+    paymentCurrency: reservation.payment_currency,
+    paymentDate: reservation.payment_date,
+    paymentTime: reservation.payment_time,
+    paymentId: reservation.payment_id,
+    paymentNotes: reservation.payment_notes,
+});
+
 export const reservationService = {
     /**
      * Fetch reservations for a specific date and restaurant.
@@ -26,37 +51,45 @@ export const reservationService = {
 
             const data = response.data;
 
-            const reservations = data.reservations.map((reservation) => ({
-                id: reservation.id,
-                bookingId: reservation.booking_id,   // e.g. "BK-A0E78660" — used for transcription API
-                time: reservation.time,
-                bookerName: reservation.guest_name,
-                phone: reservation.guest?.phone || '',
-                guests: reservation.party_size,
-                tableNumber: reservation.table_number || null,
-                status: reservation.status,
-                source: reservation.source,
-                callId: reservation.call_id,
-                date: reservation.date,
-                notes: reservation.notes,
-                guestData: reservation.guest,
-                callData: reservation.call,
-                paymentStatus: reservation.payment_status,
-                paymentMethod: reservation.payment_method,
-                paymentAmount: reservation.payment_amount,
-                paymentCurrency: reservation.payment_currency,
-                paymentDate: reservation.payment_date,
-                paymentTime: reservation.payment_time,
-                paymentId: reservation.payment_id,
-                paymentNotes: reservation.payment_notes,
-            }));
-
             return {
                 date: data.date,
                 totalBookings: data.total_bookings,
                 totalGuests: data.total_guests,
                 capacity: data.capacity,
-                reservations,
+                reservations: (data.reservations || []).map(mapReservation),
+            };
+        } catch (error) {
+            const message = handleApiError(error, 'Failed to fetch reservations');
+            throw new Error(message);
+        }
+    },
+
+    /**
+     * Fetch reservations for an inclusive date range (max 31 days).
+     * Uses ?from=&to= — do not combine with ?date=.
+     */
+    getReservationsRange: async (from, to, restaurantId) => {
+        try {
+            const response = await apiClient.get(RESERVATION_ENDPOINTS.GET_BY_DATE(restaurantId), {
+                params: { from, to },
+            });
+
+            const data = response.data;
+            const days = (data.days || []).map((day) => ({
+                date: day.date,
+                totalBookings: day.total_bookings,
+                totalGuests: day.total_guests,
+                capacity: day.capacity,
+                reservations: (day.reservations || []).map(mapReservation),
+            }));
+
+            return {
+                from: data.from,
+                to: data.to,
+                totalBookings: data.total_bookings,
+                totalGuests: data.total_guests,
+                days,
+                reservations: days.flatMap((day) => day.reservations),
             };
         } catch (error) {
             const message = handleApiError(error, 'Failed to fetch reservations');
