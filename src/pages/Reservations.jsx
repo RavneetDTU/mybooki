@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Users, User, Plus } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { reservationService } from '../services/reservations';
-import { formatTime12Hour, getLastNDaysRange, formatDateRangeLabel, parseAPIDate, formatDateLong as formatDateLongUtil } from '../utils/dateUtils';
+import { formatTime12Hour, getNextNDaysRange, formatDateRangeLabel, parseAPIDate, formatDateLong as formatDateLongUtil } from '../utils/dateUtils';
 import { DATE_PERIODS } from '../config/constants';
 import { useAuthStore } from '../store/useAuthStore';
 import ConversationModal from '../components/ConversationModal';
@@ -198,7 +198,7 @@ export function Reservations() {
             if (isTodayPeriod) {
                 data = await reservationService.getReservations(selectedDate, restaurantId);
             } else {
-                const range = getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30);
+                const range = getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30);
                 data = await reservationService.getReservationsRange(range.from, range.to, restaurantId);
             }
             console.log('[Reservations] Response:', data);
@@ -305,8 +305,8 @@ export function Reservations() {
         ? formatDateRangeLabel(reservationData.from, reservationData.to)
         : !isTodayPeriod
             ? formatDateRangeLabel(
-                getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).from,
-                getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).to
+                getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30).from,
+                getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30).to
             )
             : null;
 

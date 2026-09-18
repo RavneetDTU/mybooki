@@ -6,7 +6,7 @@ import {
 import { failedBookingsService } from '../services/failedBookings';
 import { otherMessagesService } from '../services/otherMessages';
 import { useAuthStore } from '../store/useAuthStore';
-import { formatTime12Hour, getLastNDaysRange, formatDateRangeLabel } from '../utils/dateUtils';
+import { formatTime12Hour, getNextNDaysRange, formatDateRangeLabel } from '../utils/dateUtils';
 import { DATE_PERIODS } from '../config/constants';
 import DatePeriodFilter from '../components/DatePeriodFilter';
 
@@ -296,7 +296,7 @@ export default function FailedBookings() {
         try {
             const query = isTodayPeriod
                 ? selectedDate
-                : getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30);
+                : getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30);
             const [failedData, msgData] = await Promise.all([
                 failedBookingsService.getFailedBookings(query, restaurantId),
                 otherMessagesService.getOtherMessages(query, restaurantId),
@@ -411,8 +411,8 @@ export default function FailedBookings() {
                         ) : (
                             <div className="px-4 py-2 bg-white border-2 border-foreground rounded-lg text-sm font-heading w-fit">
                                 {formatDateRangeLabel(
-                                    getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).from,
-                                    getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).to
+                                    getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30).from,
+                                    getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30).to
                                 )}
                             </div>
                         )}
@@ -438,8 +438,8 @@ export default function FailedBookings() {
                         {isTodayPeriod
                             ? formatDateLong(selectedDate)
                             : formatDateRangeLabel(
-                                getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).from,
-                                getLastNDaysRange(period === DATE_PERIODS.LAST_7 ? 7 : 30).to
+                                getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30).from,
+                                getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30).to
                             )}
                     </span>
                 </p>

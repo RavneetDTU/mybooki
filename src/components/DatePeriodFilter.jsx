@@ -2,8 +2,8 @@ import { DATE_PERIODS } from '../config/constants';
 
 const OPTIONS = [
     { id: DATE_PERIODS.TODAY, label: 'Today' },
-    { id: DATE_PERIODS.LAST_7, label: 'Last 7 Days' },
-    { id: DATE_PERIODS.LAST_30, label: 'Last 30 Days' },
+    { id: DATE_PERIODS.NEXT_7, label: 'Next 7 Days' },
+    { id: DATE_PERIODS.NEXT_30, label: 'Next 30 Days' },
 ];
 
 /**
