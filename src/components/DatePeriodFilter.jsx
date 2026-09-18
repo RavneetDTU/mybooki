@@ -2,8 +2,8 @@ import { DATE_PERIODS } from '../config/constants';
 
 const OPTIONS = [
     { id: DATE_PERIODS.TODAY, label: 'Today' },
-    { id: DATE_PERIODS.LAST_7, label: 'Last 7 Days' },
-    { id: DATE_PERIODS.LAST_30, label: 'Last 30 Days' },
+    { id: DATE_PERIODS.NEXT_7, label: 'Next 7 Days' },
+    { id: DATE_PERIODS.NEXT_30, label: 'Next 30 Days' },
 ];
 
 /**
@@ -15,7 +15,7 @@ export default function DatePeriodFilter({ value, onChange }) {
         <div
             role="tablist"
             aria-label="Date range"
-            className="inline-flex items-center rounded-lg border-2 border-foreground bg-white p-0.5"
+            className="inline-flex items-center gap-2"
         >
             {OPTIONS.map((option) => {
                 const isActive = value === option.id;
@@ -26,10 +26,10 @@ export default function DatePeriodFilter({ value, onChange }) {
                         role="tab"
                         aria-selected={isActive}
                         onClick={() => onChange(option.id)}
-                        className={`px-3.5 py-1.5 rounded-md text-sm font-heading whitespace-nowrap transition-all cursor-pointer ${
+                        className={`px-4 py-2 rounded-lg text-sm font-heading whitespace-nowrap border-2 transition-all cursor-pointer ${
                             isActive
-                                ? 'bg-foreground text-white'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                                ? 'bg-foreground text-white border-foreground'
+                                : 'bg-white text-foreground border-border hover:border-foreground'
                         }`}
                     >
                         {option.label}

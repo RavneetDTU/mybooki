@@ -20,8 +20,8 @@ export const DATE_FORMATS = {
 // Reservation / Other Calls list period filter
 export const DATE_PERIODS = {
     TODAY: 'today',
-    LAST_7: '7d',
-    LAST_30: '30d',
+    NEXT_7: '7d',
+    NEXT_30: '30d',
 };
 
 // Reservation Status

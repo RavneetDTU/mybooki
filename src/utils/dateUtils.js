@@ -70,13 +70,13 @@ export const addDays = (date, days) => {
 };
 
 /**
- * Inclusive last-N-days window ending today (Today + previous N-1 days).
+ * Inclusive next-N-days window starting today (Today + following N-1 days).
  * @param {number} days - 7 or 30
  * @returns {{ from: string, to: string, fromDate: Date, toDate: Date }}
  */
-export const getLastNDaysRange = (days) => {
-    const toDate = getToday();
-    const fromDate = addDays(toDate, -(days - 1));
+export const getNextNDaysRange = (days) => {
+    const fromDate = getToday();
+    const toDate = addDays(fromDate, days - 1);
     return {
         from: formatDateForAPI(fromDate),
         to: formatDateForAPI(toDate),
