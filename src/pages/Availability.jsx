@@ -1,6 +1,8 @@
 import { ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
 import { useState } from 'react';
 import { CapacitySection } from '../components/CapacitySection';
+import { HolidaysSection } from '../components/HolidaysSection';
+import { OperatingHoursSection } from '../components/OperatingHoursSection';
 import apiClient from '../services/api/axios';
 import { AVAILABILITY_ENDPOINTS } from '../services/api/endpoints';
 import { useAuthStore } from '../store/useAuthStore';
@@ -285,6 +287,10 @@ export function Availability() {
             })}
           </div>
         </div>
+
+        <OperatingHoursSection />
+
+        <HolidaysSection />
 
         {/* Capacity Management — same component previously on Settings */}
         <CapacitySection />
