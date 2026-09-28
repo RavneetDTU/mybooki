@@ -34,6 +34,19 @@ export const AVAILABILITY_ENDPOINTS = {
     SET: (restaurantId) => `/restaurants/${restaurantId}/availability`,
 };
 
+// Weekly Operating Hours (breakfast / lunch / dinner shifts) Endpoints
+export const OPERATING_HOURS_ENDPOINTS = {
+    GET: (restaurantId) => `/restaurants/${restaurantId}/operating-hours`,
+    UPDATE: (restaurantId) => `/restaurants/${restaurantId}/operating-hours`,
+};
+
+// Holiday Endpoints
+export const HOLIDAY_ENDPOINTS = {
+    LIST: (restaurantId) => `/restaurants/${restaurantId}/holidays`,
+    CREATE: (restaurantId) => `/restaurants/${restaurantId}/holidays`,
+    DELETE: (restaurantId, holidayId) => `/restaurants/${restaurantId}/holidays/${holidayId}`,
+};
+
 // Address Endpoints
 export const ADDRESS_ENDPOINTS = {
     GET: (restaurantId) => `/restaurants/${restaurantId}/address`,
