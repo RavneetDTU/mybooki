@@ -75,7 +75,7 @@ Browser (React SPA)
     │   ├── LandingPage.jsx         # Landing page route
     │   ├── Reservations.jsx        # Daily reservation view with date picker + status management
     │   ├── Guests.jsx              # Guest list with search and inline editing
-    │   ├── Availability.jsx        # Operating hours and capacity configuration
+    │   ├── Availability.jsx        # Sittings, weekly hours, date sittings, holidays
     │   ├── Stats.jsx               # Restaurant statistics overview
     │   ├── Payments.jsx            # PayFast payment history
     │   ├── FailedBookings.jsx      # Failed/incomplete AI call bookings
@@ -173,7 +173,7 @@ The dev server runs on `http://localhost:5173` by default.
 |---|---|---|
 | `/reservations` | `Reservations` | Daily reservations with date picker + status controls |
 | `/guests` | `Guests` | Full guest list with inline edit |
-| `/availability` | `Availability` | Operating hours and cover capacity settings |
+| `/availability` | `Availability` | Sittings (each with its own capacity), weekly hours, one-off date sittings, holidays |
 | `/stats` | `Stats` | Restaurant statistics overview |
 | `/payments` | `Payments` | PayFast payment history + refunds |
 | `/failed-bookings` | `FailedBookings` | Failed/incomplete AI call bookings |
@@ -202,6 +202,11 @@ The dev server runs on `http://localhost:5173` by default.
 | `GET` | `/restaurants/:restaurantId/address` | Fetch restaurant address |
 | `PUT` | `/restaurants/:restaurantId/address` | Update restaurant address |
 | `POST` | `/restaurants/:restaurantId/availability` | Set availability / operating hours |
+| `GET` | `/restaurants/:restaurantId/availability?month=YYYY-MM` | Month calendar with per-day sitting slots |
+| `GET`/`PUT` | `/restaurants/:restaurantId/operating-hours` | Weekly schedule — per-day sitting slots |
+| `GET`/`POST` | `/restaurants/:restaurantId/sittings` | List / create sittings (name, description, capacity) |
+| `PUT`/`DELETE` | `/restaurants/:restaurantId/sittings/:sittingId` | Update (full replace) / soft-delete a sitting |
+| `GET`/`PUT`/`DELETE` | `/restaurants/:restaurantId/sitting-schedules` | One-off date sittings (e.g. Christmas Dinner) |
 | `GET` | `/restaurants/:restaurantId/transcriptions/:bookingId` | Fetch call transcription |
 | `PATCH` | `/settings/password` | Change password |
 

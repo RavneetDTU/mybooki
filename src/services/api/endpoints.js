@@ -32,9 +32,25 @@ export const GUEST_ENDPOINTS = {
 // Availability Endpoints
 export const AVAILABILITY_ENDPOINTS = {
     SET: (restaurantId) => `/restaurants/${restaurantId}/availability`,
+    GET_MONTH: (restaurantId) => `/restaurants/${restaurantId}/availability`,
 };
 
-// Weekly Operating Hours (breakfast / lunch / dinner shifts) Endpoints
+// Sitting Endpoints (restaurant-defined sittings, e.g. Lunch, Pub Lunch, Christmas Dinner)
+export const SITTING_ENDPOINTS = {
+    LIST: (restaurantId) => `/restaurants/${restaurantId}/sittings`,
+    CREATE: (restaurantId) => `/restaurants/${restaurantId}/sittings`,
+    UPDATE: (restaurantId, sittingId) => `/restaurants/${restaurantId}/sittings/${sittingId}`,
+    DELETE: (restaurantId, sittingId) => `/restaurants/${restaurantId}/sittings/${sittingId}`,
+};
+
+// One-off date sitting schedules (override the weekly schedule for a specific date)
+export const SITTING_SCHEDULE_ENDPOINTS = {
+    LIST: (restaurantId) => `/restaurants/${restaurantId}/sitting-schedules`,
+    UPDATE: (restaurantId) => `/restaurants/${restaurantId}/sitting-schedules`,
+    DELETE: (restaurantId) => `/restaurants/${restaurantId}/sitting-schedules`,
+};
+
+// Weekly Operating Hours Endpoints (per-day sitting slots; legacy breakfast / lunch / dinner keys still returned)
 export const OPERATING_HOURS_ENDPOINTS = {
     GET: (restaurantId) => `/restaurants/${restaurantId}/operating-hours`,
     UPDATE: (restaurantId) => `/restaurants/${restaurantId}/operating-hours`,

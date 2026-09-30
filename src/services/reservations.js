@@ -32,6 +32,8 @@ const mapReservation = (reservation) => ({
     paymentTime: reservation.payment_time,
     paymentId: reservation.payment_id,
     paymentNotes: reservation.payment_notes,
+    sittingId: reservation.sitting_id ?? null,       // null for bookings made before sittings existed
+    sittingName: reservation.sitting_name ?? null,
 });
 
 export const reservationService = {
