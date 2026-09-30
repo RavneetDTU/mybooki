@@ -1,53 +1,30 @@
 import { Clock, Copy, Info, Loader, RefreshCw, Save } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { operatingHoursService, SHIFTS, WEEK_DAYS } from '../services/operatingHours';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { operatingHoursService, WEEK_DAYS } from '../services/operatingHours';
 import { useAuthStore } from '../store/useAuthStore';
-
-const SHIFT_LABELS = {
-    breakfast: 'Breakfast',
-    lunch: 'Lunch',
-    dinner: 'Dinner',
-};
+import { validateSlots } from '../utils/sittingSlots';
+import { SittingSlotsEditor } from './SittingSlotsEditor';
 
 // Returns an error string for the first invalid day, or null if the schedule is valid.
-// "HH:mm" strings compare correctly as plain strings.
-function validateSchedule(schedule) {
+// Overlapping sittings are allowed on purpose — each sitting has its own capacity.
+function validateSchedule(schedule, sittings) {
     for (const day of WEEK_DAYS) {
         const d = schedule[day];
         if (d.is_closed) continue;
-
-        const active = SHIFTS.filter((s) => d[s].enabled);
-        if (active.length === 0) {
-            return `${day}: enable at least one shift, or mark the day as Closed.`;
+        if (d.slots.length === 0) {
+            return `${day}: add at least one sitting, or mark the day as Closed.`;
         }
-
-        for (const s of active) {
-            const { open_time, close_time } = d[s];
-            if (!open_time || !close_time) {
-                return `${day} ${SHIFT_LABELS[s]}: opening and closing time are required.`;
-            }
-            if (open_time >= close_time) {
-                return `${day} ${SHIFT_LABELS[s]}: opening time must be before closing time.`;
-            }
-        }
-
-        const sorted = [...active].sort((a, b) => d[a].open_time.localeCompare(d[b].open_time));
-        for (let i = 1; i < sorted.length; i++) {
-            const prev = d[sorted[i - 1]];
-            const curr = d[sorted[i]];
-            if (curr.open_time < prev.close_time) {
-                return `${day}: ${SHIFT_LABELS[sorted[i - 1]]} and ${SHIFT_LABELS[sorted[i]]} timings overlap.`;
-            }
-        }
+        const error = validateSlots(d.slots, sittings, day);
+        if (error) return error;
     }
     return null;
 }
 
 /**
  * OperatingHoursSection
- * Weekly recurring schedule with separate Breakfast / Lunch / Dinner timings per day.
+ * Weekly recurring schedule: per day, any number of the restaurant's sittings with their own start/end time.
  */
-export function OperatingHoursSection() {
+export function OperatingHoursSection({ sittings = [], sittingsLoading = false, onSaved }) {
     const { restaurantId } = useAuthStore();
 
     const [schedule, setSchedule] = useState(null);
@@ -55,13 +32,14 @@ export function OperatingHoursSection() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [loadError, setLoadError] = useState('');
+    const loadedForRef = useRef(null);
 
-    const loadSchedule = useCallback(async () => {
+    const loadSchedule = useCallback(async (sittingList) => {
         if (!restaurantId) return;
         setLoading(true);
         setLoadError('');
         try {
-            const data = await operatingHoursService.getOperatingHours(restaurantId);
+            const data = await operatingHoursService.getWeeklySittings(restaurantId, sittingList);
             setSchedule(data.schedule);
             setIsSaved(data.isSaved);
         } catch (err) {
@@ -72,7 +50,17 @@ export function OperatingHoursSection() {
         }
     }, [restaurantId]);
 
-    useEffect(() => { loadSchedule(); }, [loadSchedule]);
+    // Load once sittings are known (needed to map legacy breakfast/lunch/dinner days onto sittings).
+    // Later sitting edits must not wipe unsaved schedule changes, so this does not re-run on every change.
+    useEffect(() => {
+        if (sittingsLoading || !restaurantId || loadedForRef.current === restaurantId) return;
+        loadedForRef.current = restaurantId;
+        loadSchedule(sittings);
+    }, [sittingsLoading, restaurantId, sittings, loadSchedule]);
+
+    // Slots for deleted sittings are hidden by the API; mirror that locally without a reload.
+    const knownIds = new Set(sittings.map((s) => String(s.id)));
+    const visibleSlots = (d) => d.slots.filter((s) => s.sitting_id === '' || knownIds.has(String(s.sitting_id)));
 
     const toggleDayClosed = (day) => {
         setSchedule((prev) => ({
@@ -81,13 +69,10 @@ export function OperatingHoursSection() {
         }));
     };
 
-    const updateShift = (day, shift, field, value) => {
+    const updateDaySlots = (day, slots) => {
         setSchedule((prev) => ({
             ...prev,
-            [day]: {
-                ...prev[day],
-                [shift]: { ...prev[day][shift], [field]: value },
-            },
+            [day]: { ...prev[day], slots },
         }));
     };
 
@@ -98,9 +83,7 @@ export function OperatingHoursSection() {
             WEEK_DAYS.forEach((day) => {
                 next[day] = {
                     is_closed: monday.is_closed,
-                    breakfast: { ...monday.breakfast },
-                    lunch: { ...monday.lunch },
-                    dinner: { ...monday.dinner },
+                    slots: monday.slots.map((s) => ({ ...s })),
                 };
             });
             return next;
@@ -108,15 +91,21 @@ export function OperatingHoursSection() {
     };
 
     const handleSave = async () => {
-        const error = validateSchedule(schedule);
+        const cleaned = {};
+        WEEK_DAYS.forEach((day) => {
+            cleaned[day] = { ...schedule[day], slots: visibleSlots(schedule[day]) };
+        });
+        const error = validateSchedule(cleaned, sittings);
         if (error) {
             alert(error);
             return;
         }
         setSaving(true);
         try {
-            await operatingHoursService.updateOperatingHours(restaurantId, schedule);
+            await operatingHoursService.updateWeeklySittings(restaurantId, cleaned);
+            setSchedule(cleaned);
             setIsSaved(true);
+            onSaved?.();
             alert('Operating hours saved successfully!');
         } catch (err) {
             console.error('[OperatingHoursSection] Save failed:', err);
@@ -125,6 +114,8 @@ export function OperatingHoursSection() {
             setSaving(false);
         }
     };
+
+    const hasActiveSittings = sittings.some((s) => s.is_active);
 
     return (
         <div className="bg-white border border-border rounded-lg overflow-hidden">
@@ -137,7 +128,7 @@ export function OperatingHoursSection() {
                         </h2>
                     </div>
                     <button
-                        onClick={loadSchedule}
+                        onClick={() => loadSchedule(sittings)}
                         disabled={loading}
                         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-40"
                         title="Refresh"
@@ -147,12 +138,12 @@ export function OperatingHoursSection() {
                     </button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                    Set your regular weekly timings for breakfast, lunch, and dinner. The AI bot only accepts bookings inside these times.
+                    Set the weekly time for each sitting. A restaurant with nothing saved yet starts with every day open: Breakfast 08:00–11:00, Lunch 12:00–15:30, Dinner 18:00–22:00. Sittings may overlap.
                 </p>
             </div>
 
             <div className="p-5 space-y-4">
-                {loading ? (
+                {loading || sittingsLoading ? (
                     <div className="flex items-center justify-center py-8">
                         <Loader className="w-5 h-5 animate-spin text-muted-foreground" />
                         <span className="ml-2 text-sm text-muted-foreground">Loading operating hours…</span>
@@ -163,11 +154,20 @@ export function OperatingHoursSection() {
                     </div>
                 ) : schedule && (
                     <>
-                        {!isSaved && (
+                        {!hasActiveSittings && (
                             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
                                 <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                                 <p className="text-xs text-amber-800">
-                                    No operating hours saved yet. Default timings are shown below — review them and click <strong>Save Operating Hours</strong>.
+                                    You have no active sittings. Add a sitting in the <strong>Sittings</strong> section above before setting timings.
+                                </p>
+                            </div>
+                        )}
+
+                        {!isSaved && hasActiveSittings && (
+                            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                <p className="text-xs text-amber-800">
+                                    No operating hours saved yet. Add sittings to each open day and click <strong>Save Operating Hours</strong>.
                                 </p>
                             </div>
                         )}
@@ -189,11 +189,7 @@ export function OperatingHoursSection() {
                                     <tr>
                                         <th className="text-left text-xs font-semibold text-foreground px-4 py-2.5 w-32">Day</th>
                                         <th className="text-left text-xs font-semibold text-foreground px-4 py-2.5 w-28">Status</th>
-                                        {SHIFTS.map((s) => (
-                                            <th key={s} className="text-left text-xs font-semibold text-foreground px-4 py-2.5">
-                                                {SHIFT_LABELS[s]}
-                                            </th>
-                                        ))}
+                                        <th className="text-left text-xs font-semibold text-foreground px-4 py-2.5">Sittings</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -201,8 +197,8 @@ export function OperatingHoursSection() {
                                         const d = schedule[day];
                                         return (
                                             <tr key={day} className={d.is_closed ? 'bg-red-50/50' : ''}>
-                                                <td className="px-4 py-3 text-sm font-medium text-foreground">{day}</td>
-                                                <td className="px-4 py-3">
+                                                <td className="px-4 py-3 text-sm font-medium text-foreground align-top">{day}</td>
+                                                <td className="px-4 py-3 align-top">
                                                     <button
                                                         type="button"
                                                         onClick={() => toggleDayClosed(day)}
@@ -215,46 +211,18 @@ export function OperatingHoursSection() {
                                                         {d.is_closed ? 'Closed' : 'Open'}
                                                     </button>
                                                 </td>
-                                                {SHIFTS.map((s) => {
-                                                    const shift = d[s];
-                                                    const disabled = d.is_closed || !shift.enabled;
-                                                    return (
-                                                        <td key={s} className="px-4 py-3 align-top">
-                                                            {d.is_closed ? (
-                                                                <span className="text-xs font-semibold text-red-600">CLOSED</span>
-                                                            ) : (
-                                                                <div className="space-y-1.5">
-                                                                    <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={shift.enabled}
-                                                                            onChange={(e) => updateShift(day, s, 'enabled', e.target.checked)}
-                                                                            className="rounded"
-                                                                        />
-                                                                        Serve {SHIFT_LABELS[s].toLowerCase()}
-                                                                    </label>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <input
-                                                                            type="time"
-                                                                            value={shift.open_time || ''}
-                                                                            disabled={disabled}
-                                                                            onChange={(e) => updateShift(day, s, 'open_time', e.target.value)}
-                                                                            className="px-2 py-1 border border-border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-foreground disabled:bg-gray-50 disabled:text-muted-foreground"
-                                                                        />
-                                                                        <span className="text-xs text-muted-foreground">–</span>
-                                                                        <input
-                                                                            type="time"
-                                                                            value={shift.close_time || ''}
-                                                                            disabled={disabled}
-                                                                            onChange={(e) => updateShift(day, s, 'close_time', e.target.value)}
-                                                                            className="px-2 py-1 border border-border rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-foreground disabled:bg-gray-50 disabled:text-muted-foreground"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    );
-                                                })}
+                                                <td className="px-4 py-3 align-top">
+                                                    {d.is_closed ? (
+                                                        <span className="text-xs font-semibold text-red-600">CLOSED</span>
+                                                    ) : (
+                                                        <SittingSlotsEditor
+                                                            slots={visibleSlots(d)}
+                                                            sittings={sittings}
+                                                            onChange={(slots) => updateDaySlots(day, slots)}
+                                                            emptyText="No sittings on this day yet"
+                                                        />
+                                                    )}
+                                                </td>
                                             </tr>
                                         );
                                     })}
