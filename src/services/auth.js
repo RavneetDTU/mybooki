@@ -51,6 +51,20 @@ const MOCK_USERS = [
         role: 'owner',
         restaurantId: '5',
     },
+    {
+        email: 'bookings@alegriarestaurant.co.za',
+        password: 'F325eewqf3@#',
+        name: 'Alegria Restaurant',
+        role: 'owner',
+        restaurantId: '6',
+    },
+    {
+        email: 'info@kokomolangebaan.co.za',
+        password: 'Asf32q5315@#!@',
+        name: 'Kokomo Beach & Bar',
+        role: 'owner',
+        restaurantId: '7',
+    },
 
 ];
 
