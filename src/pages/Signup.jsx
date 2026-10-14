@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { authService } from '../services/auth';
+import { bookiopsService, isBookiOpsEnabled } from '../services/bookiops';
 
 /* ─── SVG icon components (black / slate, aesthetic minimal) ─── */
 const IconCalendar = () => (
@@ -120,11 +120,15 @@ export default function Signup() {
         setLocalError(null);
         setIsSubmitting(true);
         try {
-            const result = await authService.register(formData, formData.verificationDoc);
-            console.log('[Signup] Registration successful:', result);
+            if (!isBookiOpsEnabled()) {
+                throw new Error('Signup is not configured. Please try again later.');
+            }
+            await bookiopsService.submitOnboardingRequest(formData, {
+                idempotencyKey: String(formData.email || '').trim().toLowerCase(),
+            });
             navigate('/registration-pending');
         } catch (err) {
-            console.error('[Signup] Registration failed:', err);
+            console.error('[Signup] Signup failed:', err);
             setLocalError(err.message || 'Registration failed. Please try again.');
         } finally {
             setIsSubmitting(false);
