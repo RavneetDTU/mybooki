@@ -1,5 +1,5 @@
 /**
- * BookiOps client — number-change ingest (and restaurant session).
+ * BookiOps client — onboarding ingest, number-change ingest, and restaurant session.
  * Enabled only when VITE_BOOKIOPS_API_URL is set (feature-safe when unset).
  */
 
@@ -9,13 +9,14 @@ const BOOKIOPS_API_URL = String(import.meta.env.VITE_BOOKIOPS_API_URL || '')
 
 export const isBookiOpsEnabled = () => Boolean(BOOKIOPS_API_URL);
 
-async function request(path, { method = 'GET', body, token } = {}) {
+async function request(path, { method = 'GET', body, token, idempotencyKey } = {}) {
     if (!BOOKIOPS_API_URL) {
         throw new Error('BookiOps is not configured');
     }
 
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers.Authorization = `Bearer ${token}`;
+    if (idempotencyKey) headers['Idempotency-Key'] = String(idempotencyKey);
 
     const res = await fetch(`${BOOKIOPS_API_URL}${path}`, {
         method,
@@ -47,6 +48,47 @@ export const bookiopsService = {
             restaurantId: data.restaurantId,
             expiresIn: data.expiresIn,
         };
+    },
+
+    /**
+     * Record a public signup in BookiOps for admin review.
+     * POST /ingest/onboarding-requests (unauthenticated JSON).
+     * Sends password so BookiOps can store a hash. Does not send the verification file.
+     */
+    submitOnboardingRequest: async (formData, { idempotencyKey } = {}) => {
+        const body = {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            restaurantName: formData.restaurantName,
+            restaurantEmail: formData.restaurantEmail,
+            restaurantPhone: formData.restaurantPhone,
+            restaurantAddress: formData.restaurantAddress,
+            contactName: formData.contactName,
+            contactPhone: formData.contactPhone,
+            contactEmail: formData.contactEmail,
+            source: 'public_signup',
+        };
+        const key =
+            idempotencyKey ||
+            String(formData.email || '').trim().toLowerCase() ||
+            null;
+        return request('/ingest/onboarding-requests', {
+            method: 'POST',
+            body,
+            idempotencyKey: key,
+        });
+    },
+
+    /**
+     * Attach register.booki.co.za result to an existing onboarding request.
+     * POST /ingest/onboarding-requests/:id/register-sync
+     */
+    markOnboardingRegisterSync: async (id, { registrationId, status, error } = {}) => {
+        return request(`/ingest/onboarding-requests/${id}/register-sync`, {
+            method: 'POST',
+            body: { registrationId, status, error },
+        });
     },
 
     /**
