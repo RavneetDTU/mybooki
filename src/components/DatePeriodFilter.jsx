@@ -8,7 +8,7 @@ const OPTIONS = [
 
 /**
  * Segmented period control used next to the existing date picker
- * on Reservations and Other Calls.
+ * on Reservations and All Calls.
  */
 export default function DatePeriodFilter({ value, onChange }) {
     return (

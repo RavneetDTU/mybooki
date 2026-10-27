@@ -17,7 +17,7 @@ export const DATE_FORMATS = {
     DISPLAY_LONG: 'dddd, MMMM DD, YYYY', // Thursday, January 22, 2026
 };
 
-// Reservation / Other Calls list period filter
+// Reservation / All Calls list period filter
 export const DATE_PERIODS = {
     TODAY: 'today',
     NEXT_7: '7d',
