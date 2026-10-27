@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Users, User, Plus, Phone } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { reservationService } from '../services/reservations';
 import { formatTime12Hour, getNextNDaysRange, formatDateRangeLabel, parseAPIDate, formatDateLong as formatDateLongUtil } from '../utils/dateUtils';
 import { DATE_PERIODS } from '../config/constants';
@@ -7,6 +8,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import ConversationModal from '../components/ConversationModal';
 import CreateReservationModal from '../components/CreateReservationModal';
 import DatePeriodFilter from '../components/DatePeriodFilter';
+import BookingSourceBadge from '../components/BookingSourceBadge';
+import { SAMPLE_RESERVATIONS, getSampleReservation } from '../data/omnichannelMock';
 
 function ReservationTimeSlots({ reservations, onView }) {
     const groupedReservations = reservations.reduce((acc, reservation) => {
@@ -57,6 +60,7 @@ function ReservationTimeSlots({ reservations, onView }) {
                                         </p>
                                     )}
                                 </div>
+                                <BookingSourceBadge source={bookingsWithNames[0].source} iconOnly />
                                 <div className="flex-1 flex items-center justify-center min-w-0">
                                     {bookingsWithNames[0].phone && (
                                         <div className="flex items-center gap-1.5 px-2.5 py-1 text-sm text-foreground bg-muted/40 border border-border rounded-md whitespace-nowrap">
@@ -133,6 +137,7 @@ function ReservationTimeSlots({ reservations, onView }) {
                                                 </p>
                                             )}
                                         </div>
+                                        <BookingSourceBadge source={reservation.source} iconOnly />
                                         <div className="flex-1 flex items-center justify-center min-w-0">
                                             {reservation.phone && (
                                                 <div className="flex items-center gap-1.5 px-2.5 py-1 text-sm text-foreground bg-muted/40 border border-border rounded-md whitespace-nowrap">
@@ -205,6 +210,7 @@ function ReservationTimeSlots({ reservations, onView }) {
 
 export function Reservations() {
     const { restaurantId } = useAuthStore();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [period, setPeriod] = useState(DATE_PERIODS.TODAY);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [selectedReservation, setSelectedReservation] = useState(null);
@@ -300,7 +306,13 @@ export function Reservations() {
     const handleCloseModal = () => {
         setShowConversationModal(false);
         setSelectedReservation(null);
+        if (searchParams.get('sample')) {
+            setSearchParams({});
+        }
     };
+
+    const sampleFromUrl = getSampleReservation(searchParams.get('sample'));
+    const activeReservation = selectedReservation || sampleFromUrl;
 
     // Convert Date to yyyy-mm-dd format for input
     const dateToInputValue = (date) => {
@@ -438,6 +450,13 @@ export function Reservations() {
                     </p>
                 </div>
 
+                <div className="mb-2">
+                    <ReservationTimeSlots
+                        reservations={SAMPLE_RESERVATIONS}
+                        onView={handleViewConversation}
+                    />
+                </div>
+
                 {/* Reservations List */}
                 {isLoading ? (
                     <div className="flex justify-center py-12">
@@ -481,9 +500,9 @@ export function Reservations() {
 
             {/* Conversation Modal */}
             <ConversationModal
-                isOpen={showConversationModal}
+                isOpen={showConversationModal || !!sampleFromUrl}
                 onClose={handleCloseModal}
-                reservation={selectedReservation}
+                reservation={activeReservation}
             />
 
             {/* Create Reservation Modal */}

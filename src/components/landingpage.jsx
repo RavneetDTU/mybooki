@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navigation from "./Navigation";
 import EnhancedVoiceAnimation from "./landingpage/enhanced-voice-animation";
 import AnimatedBackground from "./landingpage/animated-background";
@@ -8,21 +8,21 @@ import { ComparisonTable } from "./landingpage/comparision-table";
 import CustomerReview from "./landingpage/customer-review";
 import { useModalStore } from "../lib/store";
 import Footer from "./landingpage/footer";
-import JarvisWidget from "./landingpage/jarvis-widget";
+import BookingChannels from "./landingpage/booking-channels";
+import HeroDemoLauncher from "./landingpage/hero-demo-launcher";
+import PhoneCallPreviewModal from "./landingpage/booking-demo/PhoneCallPreviewModal";
+import WebsiteWidgetPreviewModal from "./landingpage/booking-demo/WebsiteWidgetPreviewModal";
+import WhatsAppPreviewModal from "./landingpage/booking-demo/WhatsAppPreviewModal";
 
 export default function LandingPage() {
     const { openEarlyAccess, openBookSetup } = useModalStore();
+    const [activeDemo, setActiveDemo] = useState(null);
 
-    useEffect(() => {
-        const handler = (event) => {
-            if (event.data?.type !== "jarvis-inline-resize") return;
-            const frame = document.getElementById("jarvis-inline-frame");
-            if (!frame) return;
-            frame.style.height = event.data.expanded ? "230px" : "52px";
-        };
-        window.addEventListener("message", handler);
-        return () => window.removeEventListener("message", handler);
-    }, []);
+    const closeDemo = () => setActiveDemo(null);
+    const captureLead = (openLead) => {
+        setActiveDemo(null);
+        openLead();
+    };
 
     const features = [
         {
@@ -179,37 +179,7 @@ export default function LandingPage() {
                     <div className="h-full flex flex-col items-center justify-center gap-8 md:gap-14 animate-slide-in-right order-1 lg:order-2">
                         <EnhancedVoiceAnimation />
 
-                        <div className="w-fit flex items-center gap-4 md:gap-6">
-                            {/* ── Jarvis inline widget ── */}
-                            <iframe
-                                src="https://widget.booki.co.za/embed/inline"
-                                allow="microphone; screen-wake-lock"
-                                title="Jarvis AI Demo"
-                                id="jarvis-inline-frame"
-                                scrolling="no"
-                                style={{
-                                    border: "none",
-                                    background: "transparent",
-                                    width: "200px",
-                                    height: "68px",
-                                    display: "inline-block",
-                                    verticalAlign: "middle",
-                                    overflow: "hidden",
-                                    transition: "height 0.35s ease",
-                                    pointerEvents: "auto",
-                                }}
-                            />
-
-                            <a
-                                href="https://wa.me/919728000432?text=Hi%2C%20I%20want%20to%20book%20a%20table"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <button className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white md:px-6 md:py-[16px] px-3 py-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-xl cursor-pointer">
-                                    Chat on WhatsApp
-                                </button>
-                            </a>
-                        </div>
+                        <HeroDemoLauncher onOpenDemo={setActiveDemo} />
                         <div className="flex flex-col">
                             <p>Booki AI is ready to take your call! </p>
                             <p>📞 US: +1 503 748 3026 </p>
@@ -218,6 +188,12 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+
+            <BookingChannels
+                onOpenDemo={setActiveDemo}
+                onEarlyAccess={openEarlyAccess}
+                onBookSetup={openBookSetup}
+            />
 
             {/* Features */}
             <section className="relative py-16 md:py-24 bg-white">
@@ -266,8 +242,24 @@ export default function LandingPage() {
             <EarlyAccessModal />
             <BookSetupModal />
 
-            {/* Jarvis AI floating widget
-            <JarvisWidget position="bottom-right" theme="light" /> */}
+            <PhoneCallPreviewModal
+                isOpen={activeDemo === "phone"}
+                onClose={closeDemo}
+                onEarlyAccess={() => captureLead(openEarlyAccess)}
+                onBookSetup={() => captureLead(openBookSetup)}
+            />
+            <WebsiteWidgetPreviewModal
+                isOpen={activeDemo === "widget"}
+                onClose={closeDemo}
+                onEarlyAccess={() => captureLead(openEarlyAccess)}
+                onBookSetup={() => captureLead(openBookSetup)}
+            />
+            <WhatsAppPreviewModal
+                isOpen={activeDemo === "whatsapp"}
+                onClose={closeDemo}
+                onEarlyAccess={() => captureLead(openEarlyAccess)}
+                onBookSetup={() => captureLead(openBookSetup)}
+            />
         </div>
     );
 }
