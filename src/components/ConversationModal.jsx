@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { X, MessageSquare, RotateCcw, FileText } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import apiClient from '../services/api/axios';
 import { TRANSCRIPTION_ENDPOINTS } from '../services/api/endpoints';
 import { handleApiError } from '../utils/errorHandler';
 import { formatTime12Hour } from '../utils/dateUtils';
-import BookingSourceBadge from './BookingSourceBadge';
-import { conversationPath } from '../data/omnichannelMock';
 
 /**
  * ConversationModal
@@ -25,33 +22,31 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
     console.log('reservation details :', reservation)
 
     useEffect(() => {
-        if (!isOpen || reservation?.isSample || !bookingId || !restaurantId) {
+        if (isOpen && bookingId && restaurantId) {
+            loadTranscription(bookingId);
+        } else {
             setTranscription(null);
             setError(null);
-            setLoading(false);
-            return undefined;
         }
+    }, [isOpen, bookingId, restaurantId]);
 
-        let cancelled = false;
-        const loadTranscription = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const url = TRANSCRIPTION_ENDPOINTS.GET_BY_BOOKING_ID(restaurantId, bookingId);
-                const response = await apiClient.get(url);
-                if (!cancelled) setTranscription(response.data);
-            } catch (err) {
-                if (!cancelled) setError(handleApiError(err, 'Failed to load transcription'));
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        };
-
-        loadTranscription();
-        return () => {
-            cancelled = true;
-        };
-    }, [isOpen, bookingId, restaurantId, reservation?.isSample]);
+    const loadTranscription = async (id) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const url = TRANSCRIPTION_ENDPOINTS.GET_BY_BOOKING_ID(restaurantId, id);
+            console.log('[ConversationModal] Fetching transcription:', url);
+            const response = await apiClient.get(url);
+            console.log('[ConversationModal] Transcription response:', response.data);
+            setTranscription(response.data);
+        } catch (err) {
+            const message = handleApiError(err, 'Failed to load transcription');
+            console.error('[ConversationModal] Error:', err);
+            setError(message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -113,10 +108,6 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                                     {display(reservation.date)} &nbsp; {display(reservation.time ? formatTime12Hour(reservation.time) : null)}
                                 </p>
                                 <p>Party of {display(reservation.guests)}</p>
-                                <div className="mt-2 flex justify-end items-center gap-2">
-                                    <span>Booking source</span>
-                                    <BookingSourceBadge source={reservation.source} />
-                                </div>
                             </div>
                         </div>
                     )}
@@ -142,11 +133,7 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                             </div>
 
                             <div className="bg-gray-50 border border-border rounded-lg p-4">
-                                {reservation?.isSample && reservation.sampleTranscript ? (
-                                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                                        {reservation.sampleTranscript}
-                                    </p>
-                                ) : transcription?.transcription ? (
+                                {transcription?.transcription ? (
                                     <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                                         {transcription.transcription}
                                     </p>
@@ -154,14 +141,6 @@ export default function ConversationModal({ isOpen, onClose, reservation }) {
                                     <p className="text-sm text-muted-foreground">N/A</p>
                                 )}
                             </div>
-                            {reservation?.conversationId && conversationPath(reservation.conversationId) ? (
-                                <Link
-                                    to={conversationPath(reservation.conversationId)}
-                                    className="inline-flex text-sm font-medium underline"
-                                >
-                                    View conversation
-                                </Link>
-                            ) : null}
 
                             {/* Notes card */}
                             {reservation?.notes && (
