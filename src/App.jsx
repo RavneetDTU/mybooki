@@ -1,29 +1,35 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Navigate, Route, BrowserRouter as Router, Routes, useSearchParams } from 'react-router-dom';
+import { conversationPath } from './data/omnichannelMock';
 import Sidebar from './components/Sidebar';
 
 // Auth Pages
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import RegistrationPending from './pages/RegistrationPending';
-import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './components/landingpage/privacy-policy';
 import TermsAndConditions from './components/landingpage/terms-of-service';
+import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
 import OnboardRestaurant from './pages/OnboardRestaurant';
+import RegistrationPending from './pages/RegistrationPending';
+import Signup from './pages/Signup';
 
 // DinePlan Pages
-import { Reservations } from './pages/Reservations';
 import { Availability } from './pages/Availability';
+import { BotSetting } from './pages/BotSetting';
+import FailedBookings from './pages/FailedBookings';
 import { Guests } from './pages/Guests';
+import { Payments } from './pages/Payments';
+import { Reservations } from './pages/Reservations';
+import { Conversations } from './pages/Conversations';
 import { SetNumber } from './pages/SetNumber';
 import { Settings } from './pages/Settings';
 import { Stats } from './pages/Stats';
-import { Payments } from './pages/Payments';
-import {BotSetting} from './pages/BotSetting';
-import FailedBookings from './pages/FailedBookings';
 import { Widget } from './pages/Widget';
 import WidgetConversations from './pages/WidgetConversations';
+import { Marketing } from './pages/Marketing';
 
-
+function LegacyConversationsRedirect() {
+  const [params] = useSearchParams();
+  return <Navigate to={conversationPath(params.get('id')) || '/whatsapp'} replace />;
+}
 
 export default function App() {
   return (
@@ -49,6 +55,10 @@ export default function App() {
                 <Routes>
                   {/* Specific Pages */}
                   <Route path="/reservations" element={<Reservations />} />
+                  <Route path="/whatsapp" element={<Conversations channel="whatsapp" />} />
+                  <Route path="/website-widget" element={<Conversations channel="widget" />} />
+                  <Route path="/email" element={<Conversations channel="email" />} />
+                  <Route path="/conversations" element={<LegacyConversationsRedirect />} />
                   <Route path="/guests" element={<Guests />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/botsettings" element={<BotSetting />} />
@@ -56,7 +66,9 @@ export default function App() {
                   <Route path="/set-number" element={<SetNumber />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/payments" element={<Payments />} />
-                  <Route path="/other-calls" element={<FailedBookings />} />
+                  <Route path="/marketing" element={<Marketing />} />
+                  <Route path="/all-calls" element={<FailedBookings />} />
+                  <Route path="/other-calls" element={<Navigate to="/all-calls" replace />} />
                   <Route path="/widget" element={<Widget />} />
                   <Route path="/widget-conversations" element={<WidgetConversations />} />
 

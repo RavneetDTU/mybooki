@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     ChevronLeft, ChevronRight, PhoneOff, Clock, Phone,
-    MessageSquare, AlertTriangle, User, MessageCircle
+    MessageSquare, AlertTriangle, User, MessageCircle, CheckCircle2, PhoneCall,
 } from 'lucide-react';
 import { failedBookingsService } from '../services/failedBookings';
 import { otherMessagesService } from '../services/otherMessages';
+import { reservationService } from '../services/reservations';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatTime12Hour, getNextNDaysRange, formatDateRangeLabel } from '../utils/dateUtils';
-import { DATE_PERIODS } from '../config/constants';
+import { DATE_PERIODS, RESERVATION_STATUS } from '../config/constants';
 import DatePeriodFilter from '../components/DatePeriodFilter';
+import ConversationModal from '../components/ConversationModal';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -31,6 +33,20 @@ const countMissing = (booking) => {
     return fields.filter(isMissing).length;
 };
 
+const formatStatusLabel = (status) => {
+    if (!status) return 'In Reservation';
+    return String(status)
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+const isSuccessfulReservation = (reservation) => {
+    const status = String(reservation.status || '').toLowerCase();
+    if (status === RESERVATION_STATUS.CANCELLED || status === 'cancelled') return false;
+    // Completed / confirmed / pending bookings that landed in reservations
+    return true;
+};
+
 // ─── Failed Booking Detail Modal ─────────────────────────────────────────────
 
 const FailedBookingModal = ({ isOpen, onClose, booking }) => {
@@ -39,7 +55,6 @@ const FailedBookingModal = ({ isOpen, onClose, booking }) => {
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl border border-border max-w-3xl w-full max-h-[90vh] flex flex-col shadow-xl">
-                {/* Header */}
                 <div className="border-b border-border px-5 py-4">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -60,7 +75,6 @@ const FailedBookingModal = ({ isOpen, onClose, booking }) => {
                     </div>
                 </div>
 
-                {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-5">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 bg-gray-50 p-4 rounded-lg border border-border">
                         <div>
@@ -96,7 +110,6 @@ const FailedBookingModal = ({ isOpen, onClose, booking }) => {
                         </div>
                     </div>
 
-                    {/* Transcription */}
                     <div>
                         <div className="flex items-center gap-2 mb-3">
                             <MessageSquare className="w-4 h-4 text-foreground" />
@@ -114,13 +127,75 @@ const FailedBookingModal = ({ isOpen, onClose, booking }) => {
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="border-t border-border p-4">
                     <button
                         onClick={onClose}
                         className="w-full px-4 py-2 bg-foreground text-white rounded-md hover:bg-foreground/90 transition-colors text-sm font-medium cursor-pointer"
                     >
                         Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── Successful Reservation Card (green) ─────────────────────────────────────
+
+const SuccessfulCallCard = ({ reservation, onView, showDate = false }) => {
+    const name = reservation.bookerName || 'Unknown Guest';
+    const status = String(reservation.status || '').toLowerCase();
+    const isCompleted = status === RESERVATION_STATUS.COMPLETED || status === 'completed';
+    const badgeLabel = isCompleted ? 'Completed' : formatStatusLabel(reservation.status || 'In Reservation');
+
+    return (
+        <div
+            onClick={() => onView(reservation)}
+            className="cursor-pointer rounded-xl border border-green-200 bg-green-50/60 hover:bg-green-50 transition-all shadow-sm hover:shadow-md group"
+        >
+            <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-green-100">
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                    </div>
+                    <span className="text-sm font-semibold text-foreground font-heading truncate">{name}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 rounded-full border border-green-200 flex-shrink-0">
+                    <PhoneCall className="w-3 h-3 text-green-500" />
+                    <span className="text-xs font-medium text-green-600">{badgeLabel}</span>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-5 px-4 py-3 flex-wrap">
+                {showDate && reservation.date && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <span className="text-xs font-medium">{reservation.date}</span>
+                    </div>
+                )}
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span className="text-xs">{formatTime12Hour(reservation.time)}</span>
+                </div>
+
+                {reservation.phone ? (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Phone className="w-3.5 h-3.5" />
+                        <span className="text-xs">{reservation.phone}</span>
+                    </div>
+                ) : (
+                    <span className="text-xs text-muted-foreground font-medium">No Phone</span>
+                )}
+
+                {reservation.guests ? (
+                    <span className="text-xs text-muted-foreground">{reservation.guests} guests</span>
+                ) : null}
+
+                <div className="ml-auto">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onView(reservation); }}
+                        className="px-3 py-1 text-xs font-medium border border-green-200 text-green-600 rounded-md hover:bg-green-100 transition-colors cursor-pointer"
+                    >
+                        View Details
                     </button>
                 </div>
             </div>
@@ -139,7 +214,6 @@ const FailedBookingCard = ({ booking, onView, showDate = false }) => {
             onClick={() => onView(booking)}
             className="cursor-pointer rounded-xl border border-red-200 bg-red-50/60 hover:bg-red-50 transition-all shadow-sm hover:shadow-md group"
         >
-            {/* Top strip */}
             <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-red-100">
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -153,7 +227,6 @@ const FailedBookingCard = ({ booking, onView, showDate = false }) => {
                 </div>
             </div>
 
-            {/* Details row */}
             <div className="flex items-center gap-5 px-4 py-3 flex-wrap">
                 {showDate && booking.call_date && (
                     <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -187,7 +260,7 @@ const FailedBookingCard = ({ booking, onView, showDate = false }) => {
     );
 };
 
-// ─── Manager Message Card (neutral / standard) ───────────────────────────────
+// ─── Manager Message Card (green) ────────────────────────────────────────────
 
 const MessageCard = ({ message, showDate = false }) => {
     const isLong = message.message && message.message.length > 160;
@@ -195,7 +268,6 @@ const MessageCard = ({ message, showDate = false }) => {
 
     return (
         <div className="rounded-xl border border-green-200 bg-green-50/60 hover:bg-green-50 transition-all shadow-sm hover:shadow-md">
-            {/* Top strip */}
             <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-green-100">
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -211,7 +283,6 @@ const MessageCard = ({ message, showDate = false }) => {
                 </div>
             </div>
 
-            {/* Meta + Message */}
             <div className="px-4 py-3 space-y-2.5">
                 <div className="flex items-center gap-5 flex-wrap">
                     {showDate && message.call_date && (
@@ -231,7 +302,6 @@ const MessageCard = ({ message, showDate = false }) => {
                     )}
                 </div>
 
-                {/* Message body */}
                 {message.message && (
                     <div className="bg-green-50 rounded-lg px-3 py-2.5 border border-green-100">
                         <p className="text-xs font-medium text-muted-foreground mb-1">Message</p>
@@ -281,6 +351,7 @@ export default function FailedBookings() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const isTodayPeriod = period === DATE_PERIODS.TODAY;
 
+    const [successfulCalls, setSuccessfulCalls] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [totalFailed, setTotalFailed] = useState(0);
     const [messages, setMessages] = useState([]);
@@ -288,26 +359,35 @@ export default function FailedBookings() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [selectedBooking, setSelectedBooking] = useState(null);
+    const [selectedReservation, setSelectedReservation] = useState(null);
 
-    // ── fetch both lists ──────────────────────────────────────────────────────
     const fetchAll = useCallback(async (silent = false) => {
         if (!restaurantId) return;
         if (!silent) setIsLoading(true);
         try {
-            const query = isTodayPeriod
-                ? selectedDate
-                : getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30);
-            const [failedData, msgData] = await Promise.all([
+            const range = getNextNDaysRange(period === DATE_PERIODS.NEXT_7 ? 7 : 30);
+            const query = isTodayPeriod ? selectedDate : range;
+
+            const reservationsPromise = isTodayPeriod
+                ? reservationService.getReservations(selectedDate, restaurantId)
+                : reservationService.getReservationsRange(range.from, range.to, restaurantId);
+
+            const [reservationData, failedData, msgData] = await Promise.all([
+                reservationsPromise,
                 failedBookingsService.getFailedBookings(query, restaurantId),
                 otherMessagesService.getOtherMessages(query, restaurantId),
             ]);
+
+            const reservations = (reservationData.reservations || []).filter(isSuccessfulReservation);
+            setSuccessfulCalls(reservations);
             setBookings(failedData.failed_bookings || []);
             setTotalFailed(failedData.total_failed_bookings || 0);
             setMessages(msgData.other_messages || []);
             setTotalMessages(msgData.total_other_messages || 0);
         } catch (error) {
-            console.error('Failed to fetch other bookings data:', error);
+            console.error('Failed to fetch all calls data:', error);
             if (!silent) {
+                setSuccessfulCalls([]);
                 setBookings([]);
                 setTotalFailed(0);
                 setMessages([]);
@@ -318,18 +398,16 @@ export default function FailedBookings() {
         }
     }, [selectedDate, restaurantId, period, isTodayPeriod]);
 
-    useEffect(() => { 
-        fetchAll(); 
-        
-        // Polling every 30 seconds
+    useEffect(() => {
+        fetchAll();
+
         const intervalId = setInterval(() => {
-            fetchAll(true); // silent fetch to prevent loading spinner flicker
+            fetchAll(true);
         }, 30000);
 
         return () => clearInterval(intervalId);
     }, [fetchAll]);
 
-    // ── date helpers ──────────────────────────────────────────────────────────
     const handlePeriodChange = (nextPeriod) => {
         setPeriod(nextPeriod);
         if (nextPeriod === DATE_PERIODS.TODAY) {
@@ -363,25 +441,23 @@ export default function FailedBookings() {
         setSelectedDate(d);
     };
 
-    const isEmpty = bookings.length === 0 && messages.length === 0;
+    const totalSuccessful = successfulCalls.length;
+    const isEmpty = successfulCalls.length === 0 && bookings.length === 0 && messages.length === 0;
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Page Header */}
             <div className="border-b border-border bg-white">
                 <div className="max-w-7xl mx-auto px-6 py-5">
                     <h1 className="font-heading font-semibold text-foreground">
-                        Other Calls
+                        All Calls
                     </h1>
                     <p className="text-sm text-muted-foreground mt-0.5">
-                        Review failed calls and manager messages
+                        Successful reservations, failed calls, and manager messages
                     </p>
                 </div>
             </div>
 
-            {/* Content */}
             <div className="max-w-7xl mx-auto px-6 py-5">
-                {/* Top bar: period + date nav + stat pills */}
                 <div className="flex items-start justify-between gap-6 mb-5 flex-wrap">
                     <div className="flex flex-col gap-3">
                         <DatePeriodFilter value={period} onChange={handlePeriodChange} />
@@ -418,8 +494,11 @@ export default function FailedBookings() {
                         )}
                     </div>
 
-                    {/* Stat pills */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <div className="bg-green-50 border-2 border-green-200 rounded-lg px-5 py-2.5 min-w-[130px]">
+                            <p className="text-xs text-green-600 mb-0.5">Successful</p>
+                            <p className="text-2xl font-heading text-green-600">{totalSuccessful}</p>
+                        </div>
                         <div className="bg-red-50 border-2 border-red-200 rounded-lg px-5 py-2.5 min-w-[130px]">
                             <p className="text-xs text-red-400 mb-0.5">Failed Calls</p>
                             <p className="text-2xl font-heading text-red-500">{totalFailed}</p>
@@ -431,7 +510,6 @@ export default function FailedBookings() {
                     </div>
                 </div>
 
-                {/* Date label */}
                 <p className="text-sm text-muted-foreground mb-5">
                     Showing results for{' '}
                     <span className="font-medium text-foreground">
@@ -444,21 +522,40 @@ export default function FailedBookings() {
                     </span>
                 </p>
 
-                {/* Loading */}
                 {isLoading ? (
                     <div className="flex justify-center py-16">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
                     </div>
                 ) : isEmpty ? (
                     <div className="text-center py-16">
-                        <PhoneOff className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-30" />
+                        <PhoneCall className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-30" />
                         <p className="text-muted-foreground text-sm">
                             {isTodayPeriod ? 'No records found for this date' : 'No records found in this period'}
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        {/* ── Failed Calls ── */}
+                        {successfulCalls.length > 0 && (
+                            <section>
+                                <SectionHeader
+                                    icon={CheckCircle2}
+                                    title="Successful / In Reservation"
+                                    count={successfulCalls.length}
+                                    color="text-green-500"
+                                />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                    {successfulCalls.map((reservation) => (
+                                        <SuccessfulCallCard
+                                            key={reservation.id}
+                                            reservation={reservation}
+                                            onView={setSelectedReservation}
+                                            showDate={!isTodayPeriod}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
                         {bookings.length > 0 && (
                             <section>
                                 <SectionHeader
@@ -480,7 +577,6 @@ export default function FailedBookings() {
                             </section>
                         )}
 
-                        {/* ── Manager Messages ── */}
                         {messages.length > 0 && (
                             <section>
                                 <SectionHeader
@@ -500,11 +596,16 @@ export default function FailedBookings() {
                 )}
             </div>
 
-            {/* Detail Modal – failed bookings only */}
             <FailedBookingModal
                 isOpen={!!selectedBooking}
                 onClose={() => setSelectedBooking(null)}
                 booking={selectedBooking}
+            />
+
+            <ConversationModal
+                isOpen={!!selectedReservation}
+                onClose={() => setSelectedReservation(null)}
+                reservation={selectedReservation}
             />
         </div>
     );
