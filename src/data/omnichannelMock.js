@@ -12,17 +12,23 @@ export function resolveBookingSource(source) {
     if (!source) return null;
     const key = String(source).toLowerCase();
     if (key === 'whatsapp' || key === 'wa') return 'whatsapp';
+    if (key === 'widget_chat') return 'widget_chat';
+    if (key === 'widget_call') return 'widget_call';
     if (key === 'widget' || key === 'website_widget') return 'widget';
     if (key === 'email') return 'email';
-    if (key === 'phone' || key === 'phone_call' || key === 'ai_call') return 'phone';
+    if (key === 'ai_call') return 'ai_call';
+    if (key === 'phone' || key === 'phone_call') return 'phone';
     return null;
 }
 
 export const CHANNEL_PRESENTATION = {
     whatsapp: { label: 'WhatsApp', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    widget: { label: 'Website Widget', className: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    widget: { label: 'Widget', className: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+    widget_chat: { label: 'Widget Chat', className: 'bg-sky-50 text-sky-700 border-sky-200' },
+    widget_call: { label: 'Widget Call', className: 'bg-violet-50 text-violet-700 border-violet-200' },
     email: { label: 'Email', className: 'bg-amber-50 text-amber-800 border-amber-200' },
-    phone: { label: 'Phone Call', className: 'bg-slate-100 text-slate-700 border-slate-200' },
+    phone: { label: 'Phone', className: 'bg-slate-100 text-slate-700 border-slate-200' },
+    ai_call: { label: 'AI Call', className: 'bg-slate-100 text-slate-700 border-slate-200' },
 };
 
 export const CHANNELS = [
@@ -270,35 +276,6 @@ export const MOCK_CONVERSATIONS = [
         },
     },
     {
-        id: 'conv-wa-lena',
-        channel: 'whatsapp',
-        customerName: 'Lena Jacobs',
-        phone: '+27 71 555 0188',
-        email: null,
-        preview: 'No special requests',
-        timeLabel: '1:15 PM',
-        unread: false,
-        status: 'reservation_confirmed',
-        reservationId: 'sample-wa-lena',
-        reservationStatus: 'confirmed',
-        messages: whatsappBookingThread({
-            name: 'Lena Jacobs',
-            phone: '+27 71 555 0188',
-            guests: '2 Guests',
-            dateLabel: 'Friday, Oct 30',
-            dateIso: '2026-10-30',
-            timeLabel: '7:00 PM',
-            requests: 'No special requests',
-            startMinute: 13 * 60,
-        }),
-        bookingSummary: {
-            date: 'Friday',
-            time: '7:00 PM',
-            guests: 2,
-            status: 'Confirmed',
-        },
-    },
-    {
         id: 'conv-wa-noah',
         channel: 'whatsapp',
         customerName: 'Noah Dlamini',
@@ -494,37 +471,6 @@ export const MOCK_CONVERSATIONS = [
             startMinute: 10 * 60,
         }),
         bookingSummary: { date: 'Wednesday, Oct 28', time: '7:00 PM', guests: 5, status: 'Confirmed' },
-    },
-    {
-        id: 'conv-widget-rahul',
-        channel: 'widget',
-        widgetKind: 'chat',
-        customerName: 'Rahul Verma',
-        phone: '+27 82 555 0142',
-        email: 'rahul.verma@example.com',
-        preview: 'Book a table',
-        timeLabel: '4:24 PM',
-        unread: false,
-        status: 'reservation_confirmed',
-        reservationId: 'sample-widget-rahul',
-        reservationStatus: 'confirmed',
-        website: 'booki.co.za · sample site',
-        messages: widgetChatThread({
-            name: 'Rahul Verma',
-            phone: '+27 82 555 0142',
-            guests: '2 Guests',
-            dateLabel: 'Wednesday, Oct 28',
-            dateIso: '2026-10-28',
-            timeLabel: '7:30 PM',
-            requests: 'No special requests',
-            startMinute: 16 * 60 + 10,
-        }),
-        bookingSummary: {
-            date: 'October 28',
-            time: '7:30 PM',
-            guests: 2,
-            status: 'Confirmed',
-        },
     },
     {
         id: 'conv-widget-sara',
@@ -868,40 +814,6 @@ export const MOCK_CONVERSATIONS = [
         bookingSummary: null,
     },
     {
-        id: 'conv-email-owen',
-        channel: 'email',
-        customerName: 'Owen Pietersen',
-        phone: '+27 82 555 0177',
-        email: 'owen.pietersen@example.com',
-        subject: 'Dinner on Saturday',
-        preview: 'Your table is confirmed below.',
-        timeLabel: 'Yesterday',
-        unread: false,
-        status: 'reservation_confirmed',
-        reservationId: 'sample-email-owen',
-        reservationStatus: 'confirmed',
-        messages: emailBookingThread({
-            name: 'Owen Pietersen',
-            phone: '+27 82 555 0177',
-            guests: '6 Guests',
-            dateLabel: 'Saturday, Oct 31',
-            dateIso: '2026-10-31',
-            timeLabel: '6:30 PM',
-            requests: 'Nut allergy',
-            enquiry: 'Hello,\n\nI would like to come for dinner on Saturday. Do you have a table?\n\nOwen Pietersen',
-            guestTime: 'Yesterday, 9:12 AM',
-            botTime: 'Yesterday, 9:14 AM',
-            detailsTime: 'Yesterday, 9:40 AM',
-            confirmTime: 'Yesterday, 9:42 AM',
-        }),
-        bookingSummary: {
-            date: 'Saturday, Oct 31',
-            time: '6:30 PM',
-            guests: 6,
-            status: 'Confirmed',
-        },
-    },
-    {
         id: 'conv-email-lindiwe',
         channel: 'email',
         customerName: 'Lindiwe Nkosi',
@@ -1042,37 +954,6 @@ export const MOCK_CONVERSATIONS = [
         bookingSummary: null,
     },
     {
-        id: 'conv-phone-amit',
-        channel: 'phone',
-        customerName: 'Amit Kumar',
-        phone: '+27 82 555 0133',
-        email: null,
-        preview: 'AI call completed. Requested a table for three.',
-        timeLabel: '3:20 PM',
-        unread: false,
-        status: 'reservation_confirmed',
-        reservationId: 'sample-phone-amit',
-        reservationStatus: 'confirmed',
-        callDirection: 'Incoming',
-        callDate: 'Today',
-        callTime: '3:12 PM',
-        callDuration: '2:14',
-        callStatus: 'Completed',
-        messages: [
-            msg('m1', 'assistant', 'Thank you for calling. How can I help you today?', '3:12 PM'),
-            msg('m2', 'customer', "I'd like a table for three tomorrow evening.", '3:13 PM'),
-            msg('m3', 'assistant', 'Certainly. May I have your name for the reservation?', '3:14 PM'),
-            msg('m4', 'customer', 'Amit Kumar.', '3:15 PM'),
-            msg('m5', 'assistant', 'Thank you. I have a table for three tomorrow at 7:30 PM under Amit Kumar.', '3:18 PM'),
-        ],
-        bookingSummary: {
-            date: 'Tomorrow',
-            time: '7:30 PM',
-            guests: 3,
-            status: 'Confirmed',
-        },
-    },
-    {
         id: 'conv-phone-mia',
         channel: 'phone',
         customerName: 'Mia Botha',
@@ -1128,77 +1009,8 @@ export const MOCK_CONVERSATIONS = [
     },
 ];
 
-/** Confirmed sample bookings only. Pending requests stay in the inbox. */
-export const SAMPLE_RESERVATIONS = [
-    {
-        id: 'sample-wa-lena',
-        isSample: true,
-        conversationId: 'conv-wa-lena',
-        bookingId: 'SAMPLE-WA-LENA',
-        bookerName: 'Lena Jacobs',
-        phone: '+27 82 555 0188',
-        guests: 2,
-        time: '19:00',
-        date: 'Sample · Friday',
-        status: 'confirmed',
-        source: 'whatsapp',
-        paymentStatus: 'Payment Pending',
-        sittingName: 'Dinner',
-        notes: 'Sample preview. This is not a live reservation.',
-        sampleTranscript: 'Customer: Can you hold a table for two on Friday at 7?\nAssistant: Yes. Name for the booking?\nCustomer: Lena Jacobs.\nAssistant: Your table for two is confirmed for Friday at 7:00 PM.',
-    },
-    {
-        id: 'sample-widget-rahul',
-        isSample: true,
-        conversationId: 'conv-widget-rahul',
-        bookingId: 'SAMPLE-WIDGET-RAHUL',
-        bookerName: 'Rahul Verma',
-        phone: '+27 82 555 0142',
-        guests: 2,
-        time: '19:30',
-        date: '2026-10-28',
-        status: 'confirmed',
-        source: 'widget',
-        paymentStatus: 'Payment Pending',
-        sittingName: 'Dinner',
-        notes: 'Sample preview. This is not a live reservation.',
-        sampleTranscript: 'Customer: Can I reserve a table for two?\nAssistant: Which date would you like to visit?\nCustomer: October 28 at 7:30 PM.\nAssistant: Your reservation is confirmed.',
-    },
-    {
-        id: 'sample-email-owen',
-        isSample: true,
-        conversationId: 'conv-email-owen',
-        bookingId: 'SAMPLE-EMAIL-OWEN',
-        bookerName: 'Owen Pietersen',
-        phone: '+27 82 555 0177',
-        guests: 6,
-        time: '18:30',
-        date: 'Sample · Saturday',
-        status: 'confirmed',
-        source: 'email',
-        paymentStatus: 'Payment Pending',
-        sittingName: 'Dinner',
-        notes: 'Nut allergy noted. Sample preview, not a live reservation.',
-        sampleTranscript: 'Customer: I would like to come for dinner on Saturday. Do you have a table?\nBooki: To book a table I need guests, date, time, name, phone, and any special requests.\nCustomer: 6 guests, Saturday 31 Oct, 6:30 PM, Owen Pietersen, nut allergy.\nBooki: Your table is confirmed.',
-    },
-    {
-        id: 'sample-phone-amit',
-        isSample: true,
-        conversationId: 'conv-phone-amit',
-        bookingId: 'SAMPLE-PHONE-AMIT',
-        bookerName: 'Amit Kumar',
-        phone: '+27 82 555 0133',
-        guests: 3,
-        time: '19:30',
-        date: 'Sample · Tomorrow',
-        status: 'confirmed',
-        source: 'phone',
-        paymentStatus: 'Payment Pending',
-        sittingName: 'Dinner',
-        notes: 'Sample preview of a phone booking. Not a live reservation.',
-        sampleTranscript: 'AI: Thank you for calling. How can I help you today?\nCustomer: I\'d like a table for three tomorrow evening.\nAI: May I have your name?\nCustomer: Amit Kumar.\nAI: I have a table for three tomorrow at 7:30 PM.',
-    },
-];
+/** Sample bookings are not shown. Live reservations come from the booking API. */
+export const SAMPLE_RESERVATIONS = [];
 
 export function getSampleReservation(id) {
     return SAMPLE_RESERVATIONS.find((item) => item.id === id) || null;

@@ -18,13 +18,14 @@ import FailedBookings from './pages/FailedBookings';
 import { Guests } from './pages/Guests';
 import { Payments } from './pages/Payments';
 import { Reservations } from './pages/Reservations';
-import { Conversations } from './pages/Conversations';
+import { Email } from './pages/Email';
+import { WidgetInbox } from './pages/WidgetInbox';
+import UpgradeFeature from './components/UpgradeFeature';
 import { SetNumber } from './pages/SetNumber';
 import { Settings } from './pages/Settings';
 import { Stats } from './pages/Stats';
 import { Widget } from './pages/Widget';
 import WidgetConversations from './pages/WidgetConversations';
-import { Marketing } from './pages/Marketing';
 
 function LegacyConversationsRedirect() {
   const [params] = useSearchParams();
@@ -51,13 +52,13 @@ export default function App() {
           element={
             <div className="flex min-h-screen">
               <Sidebar />
-              <main className="flex-1 ml-52">
+              <main className="flex-1 ml-52 min-w-0">
                 <Routes>
                   {/* Specific Pages */}
                   <Route path="/reservations" element={<Reservations />} />
-                  <Route path="/whatsapp" element={<Conversations channel="whatsapp" />} />
-                  <Route path="/website-widget" element={<Conversations channel="widget" />} />
-                  <Route path="/email" element={<Conversations channel="email" />} />
+                  <Route path="/whatsapp" element={<UpgradeFeature feature="whatsapp" />} />
+                  <Route path="/website-widget" element={<WidgetInbox />} />
+                  <Route path="/email" element={<Email />} />
                   <Route path="/conversations" element={<LegacyConversationsRedirect />} />
                   <Route path="/guests" element={<Guests />} />
                   <Route path="/settings" element={<Settings />} />
@@ -66,7 +67,7 @@ export default function App() {
                   <Route path="/set-number" element={<SetNumber />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/payments" element={<Payments />} />
-                  <Route path="/marketing" element={<Marketing />} />
+                  <Route path="/marketing" element={<UpgradeFeature feature="marketing" />} />
                   <Route path="/all-calls" element={<FailedBookings />} />
                   <Route path="/other-calls" element={<Navigate to="/all-calls" replace />} />
                   <Route path="/widget" element={<Widget />} />

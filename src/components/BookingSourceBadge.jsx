@@ -1,4 +1,4 @@
-import { Globe, Mail, Phone } from 'lucide-react';
+import { Globe, Mail, MessageCircle, Phone, PhoneCall } from 'lucide-react';
 import { CHANNEL_PRESENTATION, resolveBookingSource } from '../data/omnichannelMock';
 
 function WhatsAppIcon({ className = 'w-6 h-6' }) {
@@ -16,8 +16,11 @@ function WhatsAppIcon({ className = 'w-6 h-6' }) {
 const ICONS = {
     whatsapp: WhatsAppIcon,
     widget: Globe,
+    widget_chat: MessageCircle,
+    widget_call: PhoneCall,
     email: Mail,
     phone: Phone,
+    ai_call: Phone,
 };
 
 export default function BookingSourceBadge({ source, iconOnly = false }) {

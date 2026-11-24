@@ -103,9 +103,7 @@ export function renderTemplate(body, values) {
 
 const SEED = [
     ['c1', 'Priya Sharma', '+27 82 555 0104', 'priya.sharma@example.com', '1992-03-12', '2026-06-01', 'yes'],
-    ['c2', 'Lena Jacobs', '+27 71 555 0188', 'lena.jacobs@example.com', '1988-10-30', '2026-10-12', 'yes'],
     ['c3', 'Noah Dlamini', '+27 83 555 0110', '', '1995-10-04', '2026-01-20', 'yes'],
-    ['c4', 'Owen Pietersen', '+27 82 555 0177', 'owen.pietersen@example.com', '1984-11-02', '2026-09-02', 'yes'],
     ['c5', 'Sara Naidoo', '+27 84 555 0199', '', '1990-07-18', '2026-10-20', 'yes'],
     ['c6', 'Thandi Mthembu', '+27 73 555 0148', 'thandi@example.com', '1993-10-26', '2025-12-01', 'yes'],
     ['c7', 'Bad Number', '123', 'bad@example.com', '', '', 'yes'],

@@ -1,207 +1,105 @@
 import { useEffect, useRef, useState } from 'react';
-import { Phone, PhoneOff, RotateCcw } from 'lucide-react';
+import { Phone, PhoneOff } from 'lucide-react';
 import PreviewModal from './PreviewModal';
-import BookingSummaryCard from './BookingSummaryCard';
-import DemoBadge from './DemoBadge';
-import DemoLeadBanner from './DemoLeadBanner';
-import { DEMO_RESTAURANT, SAMPLE_GUEST, formatIsoDate } from './demoData';
-
-const SCRIPT = [
-    { from: 'ai', text: 'Thank you for calling our restaurant. How may I help you?' },
-    { from: 'guest', text: "I'd like to reserve a table for four." },
-    { from: 'ai', text: 'Certainly! What date would you like to visit?' },
-    { from: 'guest', text: 'Tomorrow evening.' },
-    { from: 'ai', text: 'Perfect. What name should I use for the reservation?' },
-    { from: 'guest', text: SAMPLE_GUEST.name },
-    { from: 'ai', text: 'And the best number to send the confirmation to?' },
-    { from: 'guest', text: SAMPLE_GUEST.phone },
-    { from: 'ai', text: 'Wonderful. I’ll hold a table for four tomorrow evening. You’ll receive a sample summary after this demo call.' },
-];
+import { widgetService } from '../../../services/widgetService';
+import { startWidgetCall } from '../../../services/widgetVoice';
 
 function formatTimer(seconds) {
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const s = String(seconds % 60).padStart(2, '0');
-    return `${m}:${s}`;
+    const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const rest = String(seconds % 60).padStart(2, '0');
+    return `${minutes}:${rest}`;
 }
 
-export default function PhoneCallPreviewModal({ isOpen, onClose, onEarlyAccess, onBookSetup }) {
-    const [phase, setPhase] = useState('idle');
-    const [lineIndex, setLineIndex] = useState(0);
+export default function PhoneCallPreviewModal({ isOpen, onClose }) {
+    const [status, setStatus] = useState('idle');
+    const [lines, setLines] = useState([]);
+    const [error, setError] = useState('');
     const [seconds, setSeconds] = useState(0);
-    const timers = useRef([]);
+    const callRef = useRef(null);
+    const threadRef = useRef(null);
 
-    const clear = () => {
-        timers.current.forEach(clearTimeout);
-        timers.current = [];
+    const stop = async (next = 'completed') => {
+        if (!callRef.current) return;
+        const current = callRef.current;
+        callRef.current = null;
+        await current.stop(next).catch(() => {});
     };
 
-    const reset = () => {
-        clear();
-        setPhase('idle');
-        setLineIndex(0);
+    const begin = async () => {
+        setError('');
+        setLines([]);
         setSeconds(0);
+        setStatus('connecting');
+        try {
+            const session = await widgetService.ensureSession();
+            widgetService.shareLocation(session).catch(() => {});
+            callRef.current = await startWidgetCall({
+                ...session,
+                websiteDomain: window.location.hostname || '',
+                onState: setStatus,
+                onLine: (line) => setLines((current) => [...current, line]),
+            });
+        } catch (err) {
+            setStatus('failed');
+            setError(err.message || 'The call could not connect.');
+            callRef.current = null;
+        }
     };
 
     useEffect(() => {
-        if (!isOpen) reset();
-        return clear;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        if (!isOpen) return undefined;
+        let alive = true;
+        begin().then(() => {
+            if (!alive) stop('disconnected');
+        });
+        return () => {
+            alive = false;
+            stop('disconnected');
+        };
     }, [isOpen]);
 
     useEffect(() => {
-        if (phase !== 'live') return undefined;
-        const id = setInterval(() => setSeconds((n) => n + 1), 1000);
+        if (status !== 'active') return undefined;
+        const id = setInterval(() => setSeconds((value) => value + 1), 1000);
         return () => clearInterval(id);
-    }, [phase]);
+    }, [status]);
 
-    const startDemo = () => {
-        clear();
-        setPhase('ringing');
-        setLineIndex(0);
-        setSeconds(0);
-        const ring = setTimeout(() => {
-            setPhase('live');
-            SCRIPT.forEach((_, index) => {
-                const id = setTimeout(() => {
-                    setLineIndex(index + 1);
-                    if (index === SCRIPT.length - 1) {
-                        const done = setTimeout(() => setPhase('ended'), 1200);
-                        timers.current.push(done);
-                    }
-                }, 1400 * (index + 1));
-                timers.current.push(id);
-            });
-        }, 1600);
-        timers.current.push(ring);
-    };
+    useEffect(() => {
+        if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    }, [lines]);
 
-    const endCall = () => {
-        clear();
-        setPhase('ended');
-        setLineIndex(SCRIPT.length);
-    };
-
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const summaryBooking = {
-        guests: '3–4 Guests',
-        date: formatIsoDate(tomorrow),
-        time: '19:00',
-        timeLabel: '7:00 PM',
-        name: SAMPLE_GUEST.name,
-        phone: SAMPLE_GUEST.phone,
-        requests: '',
-    };
-
-    const visibleLines = SCRIPT.slice(0, lineIndex);
+    const label = status === 'connecting' ? 'Connecting' : status === 'active' ? formatTimer(seconds) : status === 'failed' ? 'Call failed' : 'Call ended';
 
     return (
-        <PreviewModal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Phone booking preview"
-            labelledBy="phone-preview-title"
-            widthClass="max-w-3xl"
-        >
-            <div className="grid md:grid-cols-[260px_1fr] min-h-[520px] max-h-[90vh]">
-                <div className="bg-slate-950 text-white p-6 flex flex-col items-center text-center overflow-y-auto">
-                    <DemoBadge tone="dark">Simulated call · Demo only</DemoBadge>
-                    <div className="w-20 h-20 rounded-full bg-indigo-400/15 text-indigo-200 flex items-center justify-center font-heading text-2xl font-semibold mt-6">
-                        D
+        <PreviewModal isOpen={isOpen} onClose={onClose} title="Website call" labelledBy="phone-call-title" widthClass="max-w-lg">
+            <div className="flex flex-col h-[min(640px,86vh)] bg-slate-950 text-white">
+                <div className="px-6 pt-8 pb-4 text-center">
+                    <p id="phone-call-title" className="text-xs uppercase tracking-[0.18em] text-emerald-300">Live booking call</p>
+                    <div className={`mx-auto mt-5 flex h-20 w-20 items-center justify-center rounded-full ${status === 'active' ? 'bg-emerald-500' : 'bg-indigo-500'}`}>
+                        <Phone className="h-8 w-8" />
                     </div>
-                    <h3 id="phone-preview-title" className="mt-4 font-heading font-semibold text-lg">
-                        {DEMO_RESTAURANT.name}
-                    </h3>
-                    <p className="text-xs text-white/55 mt-1">{DEMO_RESTAURANT.phone} · sample</p>
-                    <p className="text-sm mt-4 text-emerald-300">
-                        {phase === 'idle' && 'Ready to start'}
-                        {phase === 'ringing' && 'Incoming call…'}
-                        {phase === 'live' && `Active · ${formatTimer(seconds)}`}
-                        {phase === 'ended' && 'Call ended'}
-                    </p>
-
-                    <div className="flex items-end gap-1 h-10 mt-6">
-                        {Array.from({ length: 9 }).map((_, i) => (
-                            <span
-                                key={i}
-                                className="w-1.5 rounded-full bg-emerald-300"
-                                style={{
-                                    height: '100%',
-                                    transformOrigin: 'bottom',
-                                    animation: phase === 'live' ? 'landing-demo-wave 0.9s ease-in-out infinite' : undefined,
-                                    animationDelay: `${i * 0.08}s`,
-                                    opacity: phase === 'live' ? 1 : 0.25,
-                                    transform: phase === 'live' ? undefined : 'scaleY(0.3)',
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="w-full space-y-2 pt-6">
-                        {phase === 'idle' || phase === 'ended' ? (
-                            <button
-                                type="button"
-                                onClick={startDemo}
-                                className="w-full py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-medium cursor-pointer inline-flex items-center justify-center gap-2"
-                            >
-                                <Phone className="w-4 h-4" />
-                                {phase === 'ended' ? 'Replay Demo' : 'Start Demo'}
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={endCall}
-                                className="w-full py-2.5 rounded-full bg-red-500 hover:bg-red-400 text-white text-sm font-medium cursor-pointer inline-flex items-center justify-center gap-2"
-                            >
-                                <PhoneOff className="w-4 h-4" />
-                                End Call
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={reset}
-                            className="w-full py-2 rounded-full border border-white/15 text-white/80 text-xs cursor-pointer inline-flex items-center justify-center gap-1.5 hover:bg-white/5"
-                        >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            Restart
-                        </button>
-                    </div>
+                    <p className="mt-4 text-lg font-semibold">Booki Assistant</p>
+                    <p className="text-sm text-white/70">{label}</p>
                 </div>
-
-                <div className="bg-white flex flex-col min-h-0">
-                    <div className="px-5 py-4 border-b border-indigo-100">
-                        <p className="text-sm font-heading font-semibold text-graphite">Live transcript</p>
-                        <p className="text-[11px] text-graphite/55">Visual playback only · microphone is not used</p>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                        {phase === 'idle' ? (
-                            <p className="text-sm text-graphite/60">
-                                Press Start Demo to hear how the AI receptionist walks a guest through a table booking.
-                            </p>
-                        ) : null}
-                        {visibleLines.map((line, index) => (
-                            <div key={`${line.text}-${index}`} className={`flex ${line.from === 'guest' ? 'justify-end' : 'justify-start'}`}>
-                                <div
-                                    className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
-                                        line.from === 'guest'
-                                            ? 'bg-indigo-600 text-white'
-                                            : 'bg-indigo-50 text-graphite'
-                                    }`}
-                                >
-                                    <p className="text-[10px] uppercase tracking-wide opacity-60 mb-1">
-                                        {line.from === 'ai' ? 'AI receptionist' : 'Customer'}
-                                    </p>
-                                    {line.text}
-                                </div>
-                            </div>
-                        ))}
-                        {phase === 'ended' ? (
-                            <div className="pt-2 space-y-3">
-                                <BookingSummaryCard booking={summaryBooking} />
-                                <DemoLeadBanner onEarlyAccess={onEarlyAccess} onBookSetup={onBookSetup} />
-                            </div>
-                        ) : null}
-                    </div>
+                <div ref={threadRef} className="flex-1 overflow-y-auto px-5 space-y-2">
+                    {lines.map((line, index) => (
+                        <p key={`${line.at || index}-${index}`} className={`text-sm ${line.from === 'visitor' ? 'text-white' : 'text-emerald-200'}`}>
+                            <span className="text-white/40">{line.from === 'visitor' ? 'You' : 'Assistant'}: </span>
+                            {line.text}
+                        </p>
+                    ))}
+                    {!lines.length && status === 'active' ? <p className="text-sm text-white/50 text-center">Say which restaurant you would like to book.</p> : null}
+                    {error ? <p className="text-sm text-rose-300 text-center">{error}</p> : null}
+                </div>
+                <div className="p-5 flex justify-center gap-3">
+                    {status === 'failed' || status === 'completed' || status === 'disconnected' ? (
+                        <button type="button" onClick={begin} className="px-5 py-3 rounded-full bg-emerald-500 text-white text-sm font-medium cursor-pointer">Call again</button>
+                    ) : (
+                        <button type="button" onClick={() => stop('completed').then(() => setStatus('completed'))} className="px-5 py-3 rounded-full bg-rose-500 text-white text-sm font-medium inline-flex items-center gap-2 cursor-pointer">
+                            <PhoneOff className="h-4 w-4" />
+                            End call
+                        </button>
+                    )}
                 </div>
             </div>
         </PreviewModal>

@@ -9,7 +9,7 @@ import ConversationModal from '../components/ConversationModal';
 import CreateReservationModal from '../components/CreateReservationModal';
 import DatePeriodFilter from '../components/DatePeriodFilter';
 import BookingSourceBadge from '../components/BookingSourceBadge';
-import { SAMPLE_RESERVATIONS, getSampleReservation } from '../data/omnichannelMock';
+import { getSampleReservation } from '../data/omnichannelMock';
 
 function ReservationTimeSlots({ reservations, onView }) {
     const groupedReservations = reservations.reduce((acc, reservation) => {
@@ -448,13 +448,6 @@ export function Reservations() {
                             {isTodayPeriod ? formatDateLong(selectedDate) : rangeLabel}
                         </span>
                     </p>
-                </div>
-
-                <div className="mb-2">
-                    <ReservationTimeSlots
-                        reservations={SAMPLE_RESERVATIONS}
-                        onView={handleViewConversation}
-                    />
                 </div>
 
                 {/* Reservations List */}

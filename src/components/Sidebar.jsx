@@ -1,4 +1,4 @@
-import { Bot, Calendar, Clock, CreditCard, Globe, LogOut, Mail, Megaphone, MessageCircle, Phone, PhoneCall, Settings, Users } from 'lucide-react';
+import { Bot, Calendar, Clock, CreditCard, Globe, Lock, LogOut, Mail, Megaphone, MessageCircle, Phone, PhoneCall, Settings, Users } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -38,7 +38,7 @@ function Sidebar() {
             label: 'Inbox',
             items: [
                 { path: '/all-calls', label: 'All Calls', icon: PhoneCall },
-                { path: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
+                { path: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, locked: true },
                 { path: '/website-widget', label: 'Website Widget', icon: Globe },
                 { path: '/email', label: 'Email', icon: Mail },
             ],
@@ -46,7 +46,7 @@ function Sidebar() {
         {
             label: 'Marketing',
             items: [
-                { path: '/marketing', label: 'Marketing', icon: Megaphone },
+                { path: '/marketing', label: 'Marketing', icon: Megaphone, locked: true },
             ],
         },
     ];
@@ -82,8 +82,13 @@ function Sidebar() {
                                                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                                 }`}
                                         >
-                                            <Icon className="w-5 h-5" />
-                                            <span className="text-sm">{item.label}</span>
+                                            <Icon className="w-5 h-5 shrink-0" />
+                                            <span className="text-sm flex-1">{item.label}</span>
+                                            {item.locked && (
+                                                <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${isActive ? 'bg-white' : ''}`}>
+                                                    <Lock className="w-3.5 h-3.5 text-black" aria-label="Upgraded plan" />
+                                                </span>
+                                            )}
                                         </Link>
                                     </li>
                                 );
