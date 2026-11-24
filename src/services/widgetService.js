@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { JARVIS_BASE_URL } from './api/endpoints';
 
 /**
  * Widget Service
@@ -13,6 +14,12 @@ const WIDGET_BASE_URL =
 
 const widgetClient = axios.create({
     baseURL: WIDGET_BASE_URL,
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 30000,
+});
+
+const phoneClient = axios.create({
+    baseURL: JARVIS_BASE_URL,
     headers: { 'Content-Type': 'application/json' },
     timeout: 30000,
 });
@@ -112,15 +119,63 @@ export const widgetService = {
      * Get all widget conversations for a restaurant (sorted newest first).
      * GET /api/conversations?restaurantId=[restaurantId]
      */
-    getConversations: async (restaurantId) => {
-        try {
-            console.log('[Widget] Fetching conversations for restaurantId:', restaurantId);
-            const res = await widgetClient.get(`/api/conversations`, { params: { restaurantId } });
-            console.log('[Widget] Conversations response:', res.data);
-            return res.data;
-        } catch (error) {
-            console.error('[Widget] Failed to fetch conversations:', error);
-            throw error;
+    listConversations: async (restaurantId, params = {}) => {
+        const res = await phoneClient.get('/api/widget/conversations', { params: { restaurantId, limit: 30, ...params } });
+        return res.data;
+    },
+
+    getConversation: async (restaurantId, sessionId, params = {}) => {
+        const query = { ...params };
+        if (restaurantId) query.restaurantId = restaurantId;
+        const res = await phoneClient.get(`/api/widget/conversations/${sessionId}`, { params: query });
+        return res.data;
+    },
+
+    sendChat: async ({ sessionId, visitorKey, text, kickoff, websiteDomain }) => {
+        const res = await phoneClient.post('/api/widget/chat', { sessionId, visitorKey, text, kickoff, websiteDomain });
+        return res.data;
+    },
+
+    ensureSession: async () => {
+        const key = 'booki-phone-widget';
+        let stored = null;
+        try { stored = JSON.parse(window.sessionStorage.getItem(key) || ''); } catch { stored = null; }
+        if (stored?.sessionId && stored?.visitorKey) {
+            try {
+                const saved = await phoneClient.get(`/api/widget/conversations/${stored.sessionId}`, { params: { visitorKey: stored.visitorKey, limit: 1 } });
+                if (saved.data?.conversation) return stored;
+            } catch { /* start a fresh session */ }
         }
+        const session = { sessionId: crypto.randomUUID(), visitorKey: crypto.randomUUID() };
+        window.sessionStorage.setItem(key, JSON.stringify(session));
+        await phoneClient.post('/api/widget/chat', {
+            ...session,
+            kickoff: true,
+            websiteDomain: window.location.hostname || '',
+        });
+        return session;
+    },
+
+    shareLocation: async (session) => {
+        if (!navigator.geolocation || !session?.sessionId) return null;
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+        });
+        const res = await phoneClient.post('/api/widget/place', {
+            ...session,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+        });
+        return res.data?.area || null;
+    },
+
+    saveConversation: async (body) => {
+        const res = await phoneClient.post('/api/widget/conversations', body);
+        return res.data;
+    },
+
+    getConversations: async (restaurantId) => {
+        const res = await phoneClient.get('/api/widget/conversations', { params: { restaurantId, limit: 30 } });
+        return res.data;
     },
 };

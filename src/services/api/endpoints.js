@@ -81,7 +81,7 @@ export const AUTH_ENDPOINTS = {
 };
 
 // Jarvis Base URL configuration: Automatically switches between localhost for development and live for production
-const JARVIS_BASE_URL = import.meta.env.VITE_JARVIS_BASE_URL || (import.meta.env.MODE === 'development' 
+export const JARVIS_BASE_URL = import.meta.env.VITE_JARVIS_BASE_URL || (import.meta.env.MODE === 'development' 
     ? 'http://localhost:5014' 
     : 'https://phone.booki.co.za');
 
@@ -107,4 +107,12 @@ export const JARVIS_CONFIG_ENDPOINTS = {
 // Restaurant Endpoints (Admin)
 export const RESTAURANT_ENDPOINTS = {
     CREATE: `${JARVIS_BASE_URL}/api/restaurant/create`,
+};
+
+export const MARKETING_ENDPOINTS = {
+    ROOT: (restaurantId) => `${JARVIS_BASE_URL}/api/marketing/${restaurantId}`,
+};
+
+export const WHATSAPP_INBOX_ENDPOINTS = {
+    ROOT: (restaurantId) => `${JARVIS_BASE_URL}/api/inbox/whatsapp/${restaurantId}`,
 };
